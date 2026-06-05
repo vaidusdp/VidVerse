@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import connectDB from "./db/index.js";
 import app from "./app.js";
 
 dotenv.config({
@@ -6,6 +7,15 @@ dotenv.config({
 })
 
 let port = process.env.PORT;
-app.listen(port, () => {
-    console.log("VidVerse streaming on port " + port);
-})
+
+connectDB()
+    .then(() => {
+        app.listen(port, () => {
+            console.log("VidVerse streaming on port " + port);
+        })
+    })
+    .catch((error) => {
+        console.error("Mongo DB Connection Error: " + error);
+        process.exit(1);
+    })
+
