@@ -1,0 +1,26 @@
+{
+  "name": "vidverse",
+  "version": "1.0.0",
+  "description": "A video streaming platforming for content creators",
+  "keywords": [
+    "backend",
+    "express",
+    "mongoose"
+  ],
+  "license": "ISC",
+  "author": "Vexor",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}
