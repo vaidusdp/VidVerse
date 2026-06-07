@@ -16,11 +16,11 @@ app.use(
   }),
 );
 
-app.get("/", (req, res) => {
+app.get("/api/v1/home", (req, res) => {
   console.log("Testing Home");
 });
 
-app.get("/farzi", (req, res) => {
+app.get("/api/v1/farzi", (req, res) => {
   console.log("Testing Farzi");
 });
 
