@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
-import  fs from "fs";
+import  fs, { existsSync } from "fs";
 import dotenv from "dotenv";
-import { log } from "console";
 
 dotenv.config({
     path: "./.env"
@@ -19,20 +18,20 @@ const uploadOnCloudinary = async (localFilePath) => {
             return null;
         }
 
-        const response = await cloudinary.uploader.upload(
+        const response = cloudinary.uploader.upload(
             localFilePath,
-            {
-                resource_type: "auto"
-            }
+            {resource_type: "auto"}
         );
 
-        console.log("File Uploaded Successfull. \nFile src:", response.url);
+        console.log("File Uploaded Successfully. \nFile Url: " + response.url);
+
         fs.unlinkSync(localFilePath);
         return response;
     } catch (error) {
-        if(fs.existsSync(localFilePath)){
+        if(existsSync(localFilePath)){
             fs.unlinkSync(localFilePath);
         }
+
         return null;
     }
 }
