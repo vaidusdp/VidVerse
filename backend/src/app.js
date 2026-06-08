@@ -12,7 +12,7 @@ app.use(
     origin: process.env.CORS_ORIGIN?.split(",") || "http://localhost:5173",
     credentials: true,
     methods: ["GET", "PUT", "PATCH", "DELETE", "POST", "OPTIONS"],
-    allowedHeaders: ["Authorization", "Cpntent-Type"],
+    allowedHeaders: ["Authorization", "Content-Type"],
   }),
 );
 
@@ -20,8 +20,8 @@ app.get("/api/v1/home", (req, res) => {
   console.log("Testing Home");
 });
 
-app.get("/api/v1/farzi", (req, res) => {
-  console.log("Testing Farzi");
-});
+// Auth
+import userRoutes from "./routes/auth.route.js"
+app.use("/api/v1/users", userRoutes);
 
 export default app;
