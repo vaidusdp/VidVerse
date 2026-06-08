@@ -3,6 +3,7 @@ import {APIError} from "../utils/APIError.js";
 import {APIResponse} from "../utils/APIResponse.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -154,22 +155,124 @@ const logoutUser = asyncHandler(async (req, res) => {
     req.user._id,
     {
       $set: {
-        refreshToken: null
-      }
+        refreshToken: null,
+      },
     },
-    {new: true}
+    {new: true},
   );
 
   const options = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production"
+    secure: process.env.NODE_ENV === "production",
   };
 
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new APIResponse(200, {}, "User logged out successfully"));
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.body?.refreshToken;
+
+  if (!incomingRefreshToken) {
+    throw new APIError(401, "Refresh Token Required");
+  }
+
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+    );
+
+    const user = await User.findById(decodedToken._id);
+
+    if (!user) {
+      throw new APIError(401, "Invalid Refresh Token");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new APIError(401, "Refresh token is expired or used");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    };
+
+    const {accessToken, refreshToken: newRefreshToken} =
+      await generateAccessAndRefreshToken(user._id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new APIResponse(
+          200,
+          {accessToken, refreshToken: newRefreshToken},
+          "Access token refreshed successfully",
+        ),
+      );
+  } catch (error) {
+    throw new APIError(401, "Invalid Refresh Token");
+  }
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res.status(200).json(200, req.user, "Current User Fetched");
+});
+
+const changeUserPassword = asyncHandler(async (req, res) => {
+  const {oldPassword, newPassword} = req.body;
+
+  const user = User.findById(req.user._id);
+  const isPasswordValid = user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordValid) {
+    throw new APIError(401, "Invalid User Password");
+  }
+
+  user.password = newPassword;
+  await user.save({validateBeforeSave: true});
+
+  return res
+    .status(200)
+    .json(new APIResponse(200, {}, "Password Changed Successfully"));
+});
+
+const updateAccountDetails = asyncHandler(async () => {
+  const {fullname, username, email} = req.body;
+
+  if(!fullname || !username || !email) throw new APIError(401, "Fullname, username, email are required");
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullname,
+        username: username,
+        email: email
+      },
+    }, 
+    {new: true}
+  );
+
   return res.status(200)
-            .clearCookie("accessToken", options)
-            .clearCookie("refreshToken", options)
-            .json(new APIResponse(200, {}, "User logged out successfully"));
+            .json(new APIResponse(
+              200,
+              user,
+              "User Account Updated Successfully"
+            ))
+});
 
-})
-
-export {registerUser, loginUser, logoutUser};
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  getCurrentUser,
+  changeUserPassword,
+};
