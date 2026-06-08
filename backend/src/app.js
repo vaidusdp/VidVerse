@@ -21,7 +21,7 @@ app.get("/api/v1/home", (req, res) => {
 });
 
 // Auth
-import userRoutes from "./routes/auth.route.js"
+import userRoutes from "./routes/auth.route.js";
 app.use("/api/v1/users", userRoutes);
 
 export default app;
