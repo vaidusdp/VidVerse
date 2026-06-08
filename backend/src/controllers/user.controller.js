@@ -222,7 +222,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-  return res.status(200).json(200, req.user, "Current User Fetched");
+  return res
+    .status(200)
+    .json(new APIResponse(200, req.user, "Current User Fetched"));
 });
 
 const changeUserPassword = asyncHandler(async (req, res) => {
