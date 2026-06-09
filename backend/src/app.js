@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -15,6 +16,8 @@ app.use(
     allowedHeaders: ["Authorization", "Content-Type"],
   }),
 );
+
+app.use(cookieParser());
 
 app.get("/api/v1/home", (req, res) => {
   console.log("Testing Home");
