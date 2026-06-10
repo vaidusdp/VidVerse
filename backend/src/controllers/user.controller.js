@@ -89,10 +89,10 @@ const registerUser = asyncHandler(async (req, res) => {
       .json(new APIResponse(200, createdUser, "User Registered Successfully"));
   } catch (error) {
     console.log("User Registration Failed");
-    if (avatar) await deleteFromCloudinary(avatar.public_id);
-    if (coverImage) await deleteFromCloudinary(coverImage.public_id);
+    if (avatar) await deleteFromCloudinary(avatar.public_id, "image");
+    if (coverImage) await deleteFromCloudinary(coverImage.public_id, "image");
 
-    return new APIError(
+    throw new APIError(
       500,
       "Something went wrong while creating user and images deleted",
     );
