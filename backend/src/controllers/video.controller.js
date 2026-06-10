@@ -205,15 +205,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
     },
   });
 
-  const allowedSortFields = [
-    "createdAt",
-    "views",
-    "title",
-  ];
+  const allowedSortFields = ["createdAt", "views", "title"];
 
-  const finalSortBy = allowedSortFields.includes(sortBy)
-    ? sortBy
-    : "createdAt";
+  const finalSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
 
   pipeline.push({
     $sort: {
@@ -236,4 +230,117 @@ const getAllVideos = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new APIResponse(200, videos, "Videos Fetched Successfully"));
+});
+
+const togglePublishStatus = asyncHandler(async (req, res) => {
+  const {videoId} = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new APIError(400, "Invalid Video Id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new APIError(404, "Video not found");
+  }
+
+  const userId = req.user?._id;
+  if (video.owner.toString() !== userId.toString()) {
+    throw new APIError(
+      403,
+      "You are not authorized to modify any content of this video.",
+    );
+  }
+
+  video.isPublished = !video.isPublished;
+
+  await video.save({
+    validateBeforeSave: false,
+  });
+
+  return res
+    .status(200)
+    .json(
+      new APIResponse(
+        201,
+        video,
+        `Video ${video.isPublished ? "published" : "unpublished"} successfully`,
+      ),
+    );
+});
+
+const updateVideo = asyncHandler(async (req, res) => {
+  const {videoId} = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new APIError(400, "Invalid Video Id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new APIError(404, "Video not found");
+  }
+
+  const userId = req.user?._id;
+  if (video.owner.toString() !== userId.toString()) {
+    throw new APIError(
+      403,
+      "You are not authorized to modify any content of this video.",
+    );
+  }
+
+  const {title, description} = req.body;
+
+  if (title) {
+    video.title = title;
+  }
+
+  if (description) {
+    video.description = description;
+  }
+
+  const thumbnailLocalFile = req.files?.thumbnail?.[0]?.path;
+  if (thumbnailLocalFile) {
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalFile, "image");
+
+    if (!thumbnail?.url) {
+      throw new APIError(500, "Thumbnail Upload Failed");
+    }
+
+    video.thumbnail = thumbnail.url;
+  }
+
+  await video.save({
+    validateBeforeSave: false,
+  });
+
+  return res
+    .status(200)
+    .json(new APIResponse(200, video, "Video Updated Successfully"));
+});
+
+const deleteVideo = asyncHandler(async (req, res) => {
+  const {videoId} = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new APIError(400, "Invalid Video Id");
+  }
+
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new APIError(404, "Video not found");
+  }
+
+  const userId = req.user?._id;
+  if (video.owner.toString() !== userId.toString()) {
+    throw new APIError(403, "You are not authorized to modify this video.");
+  }
+
+  await Video.findByIdAndDelete(videoId);
+
+  return res
+    .status(200)
+    .json(new APIResponse(200, {}, "Video Deleted Successfully"));
 });
