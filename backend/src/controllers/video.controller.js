@@ -137,3 +137,103 @@ const getVideoById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new APIResponse(200, video[0], "Video Uploaded Successfully"));
 });
+
+const getAllVideos = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    sortBy = "createdAt",
+    sortType = "desc",
+    userId,
+  } = req.query;
+
+  const pipeline = [];
+
+  pipeline.push({
+    $match: {
+      isPublished: true,
+    },
+  });
+
+  if (search) {
+    pipeline.push({
+      $match: {
+        title: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    });
+  }
+
+  if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+    pipeline.push({
+      $match: {
+        owner: new mongoose.Types.ObjectId(userId),
+      },
+    });
+  }
+
+  pipeline.push({
+    $lookup: {
+      from: "users",
+      localField: "owner",
+      foreignField: "_id",
+      as: "owner",
+    },
+  });
+
+  pipeline.push({
+    $unwind: "$owner",
+  });
+
+  pipeline.push({
+    $project: {
+      videoFile: 1,
+      thumbnail: 1,
+      title: 1,
+      description: 1,
+      durationInMinutes: 1,
+      views: 1,
+      createdAt: 1,
+      isPublished: 1,
+      "owner._id": 1,
+      "owner.fullname": 1,
+      "owner.username": 1,
+      "owner.avatar": 1,
+    },
+  });
+
+  const allowedSortFields = [
+    "createdAt",
+    "views",
+    "title",
+  ];
+
+  const finalSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : "createdAt";
+
+  pipeline.push({
+    $sort: {
+      [finalSortBy]: sortType === "asc" ? 1 : -1,
+    },
+  });
+
+  const skip = (Number(page) - 1) * Number(limit);
+
+  pipeline.push({
+    $skip: skip,
+  });
+
+  pipeline.push({
+    $limit: Number(limit),
+  });
+
+  const videos = await Video.aggregate(pipeline);
+
+  return res
+    .status(200)
+    .json(new APIResponse(200, videos, "Videos Fetched Successfully"));
+});
