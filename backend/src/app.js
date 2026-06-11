@@ -27,4 +27,8 @@ app.get("/api/v1/home", (req, res) => {
 import userRoutes from "./routes/auth.route.js";
 app.use("/api/v1/users", userRoutes);
 
+// Video
+import videoRoutes from "./routes/video.route.js";
+app.use("/api/v1/videos", videoRoutes);
+
 export default app;

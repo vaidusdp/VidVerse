@@ -1,4 +1,3 @@
-import {User} from "../models/user.model.js";
 import {Video} from "../models/video.model.js";
 import {APIError} from "../utils/APIError.js";
 import {APIResponse} from "../utils/APIResponse.js";
@@ -344,3 +343,76 @@ const deleteVideo = asyncHandler(async (req, res) => {
     .status(200)
     .json(new APIResponse(200, {}, "Video Deleted Successfully"));
 });
+
+const getMyVideos = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  const videos = await Video.find({
+    owner: userId,
+  }).sort({
+    createdAt: -1,
+  });
+
+  return res
+    .status(200)
+    .json(new APIResponse(200, videos, "Your Videos Fetched Successfully"));
+});
+
+const getChannelVideos = asyncHandler(async (req, res) => {
+  const {channelId} = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(channelId)) {
+    throw new APIError(404, "Channel Not Found");
+  }
+
+  const videos = await Video.aggregate([
+    {
+      $match: {
+        owner: new mongoose.Types.ObjectId(channelId),
+        isPublished: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+    {
+      $unwind: "$owner",
+    },
+    {
+      $project: {
+        videoFile: 1,
+        thumbnail: 1,
+        title: 1,
+        description: 1,
+        views: 1,
+        durationInMinutes: 1,
+        createdAt: 1,
+
+        "owner._id": 1,
+        "owner.fullname": 1,
+        "owner.username": 1,
+        "owner.avatar": 1,
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(new APIResponse(200, videos, "Channel Videos Fetched Successfully"));
+});
+
+export {
+  publishVideo,
+  getVideoById,
+  getAllVideos,
+  togglePublishStatus,
+  updateVideo,
+  deleteVideo,
+  getMyVideos,
+  getChannelVideos,
+};

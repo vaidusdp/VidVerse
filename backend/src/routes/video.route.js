@@ -1,0 +1,55 @@
+import {Router} from "express";
+import {
+  publishVideo,
+  getVideoById,
+  getAllVideos,
+  togglePublishStatus,
+  updateVideo,
+  deleteVideo,
+  getMyVideos,
+  getChannelVideos,
+} from "../controllers/video.controller.js";
+import {upload} from "../middlewares/multer.middleware.js";
+import {verifyJWT} from "../middlewares/auth.middleware.js";
+
+const router = Router();
+
+router.route("/upload-video").post(
+  verifyJWT,
+  upload.fields([
+    {
+      name: "video",
+      maxCount: 1,
+    },
+    {
+      name: "thumbnail",
+      maxCount: 1,
+    },
+  ]),
+  publishVideo,
+);
+
+router.route("/my-videos").get(verifyJWT, getMyVideos);
+router.route("/:channelId").get(verifyJWT, getChannelVideos);
+
+router.route("/toggle-publish/:videoId").patch(verifyJWT, togglePublishStatus);
+
+router.route("/update-video/:videoId").patch(
+  verifyJWT,
+  upload.fields([
+    {
+      name: "thumbnail",
+      maxCount: 1,
+    },
+  ]),
+  updateVideo,
+);
+
+router.route("/").get(verifyJWT, getAllVideos);
+
+router
+  .route("/:videoId")
+  .get(verifyJWT, getVideoById)
+  .delete(verifyJWT, deleteVideo);
+
+export default router;
