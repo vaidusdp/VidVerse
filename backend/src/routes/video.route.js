@@ -30,7 +30,10 @@ router.route("/upload-video").post(
 );
 
 router.route("/my-videos").get(verifyJWT, getMyVideos);
-router.route("/:channelId").get(verifyJWT, getChannelVideos);
+
+router.route("/channel/:channelId").get(verifyJWT, getChannelVideos);
+
+router.route("/").get(verifyJWT, getAllVideos);
 
 router.route("/toggle-publish/:videoId").patch(verifyJWT, togglePublishStatus);
 
@@ -44,8 +47,6 @@ router.route("/update-video/:videoId").patch(
   ]),
   updateVideo,
 );
-
-router.route("/").get(verifyJWT, getAllVideos);
 
 router
   .route("/:videoId")
