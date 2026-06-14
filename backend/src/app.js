@@ -37,4 +37,7 @@ app.use("/api/v1/comments", commentRoutes);
 import likeRoutes from "./routes/like.route.js";
 app.use("/api/v1/likes", likeRoutes);
 
+import subscriberRoutes from "./routes/subscription.route.js";
+app.use("/api/v1/subscription", subscriberRoutes);
+
 export default app;
