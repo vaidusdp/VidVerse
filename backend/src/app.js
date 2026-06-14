@@ -31,4 +31,7 @@ app.use("/api/v1/users", userRoutes);
 import videoRoutes from "./routes/video.route.js";
 app.use("/api/v1/videos", videoRoutes);
 
+import commentRoutes from "./routes/comment.route.js"
+app.use("/api/v1/comments", commentRoutes);
+
 export default app;
