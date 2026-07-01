@@ -40,4 +40,7 @@ app.use("/api/v1/likes", likeRoutes);
 import subscriberRoutes from "./routes/subscription.route.js";
 app.use("/api/v1/subscription", subscriberRoutes);
 
+import playlistRoutes from "./routes/playlist.route.js";
+app.use("/api/v1/playlists", playlistRoutes);
+
 export default app;

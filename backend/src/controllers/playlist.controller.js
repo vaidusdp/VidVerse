@@ -209,3 +209,13 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       new APIResponse(200, playlists, "User Playlists Fetched Successfully"),
     );
 });
+
+export {
+  createPlaylist,
+  getPlaylistById,
+  updatePlaylist,
+  deletePlaylist,
+  addVideoToPlaylist,
+  deleteVideoFromPlaylist,
+  getUserPlaylists,
+};
