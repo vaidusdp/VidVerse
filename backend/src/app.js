@@ -43,4 +43,7 @@ app.use("/api/v1/subscription", subscriberRoutes);
 import playlistRoutes from "./routes/playlist.route.js";
 app.use("/api/v1/playlists", playlistRoutes);
 
+import dashboardRoutes from "./routes/dashboard.route.js";
+app.use("/api/v1/dashboard", dashboardRoutes);
+
 export default app;
