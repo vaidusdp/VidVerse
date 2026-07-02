@@ -20,7 +20,6 @@ const videoSchema = new Schema(
       type: String,
       required: [true, "Description is required"],
       trim: true,
-      lowercase: true,
     },
     durationInMinutes: {
       type: Number,

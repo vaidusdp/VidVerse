@@ -8,10 +8,8 @@ import {verifyJWT} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/toggle-video-like/:videoId").post(verifyJWT, toggleVideoLike);
-router
-  .route("/toggle-comment-like/:commentId")
-  .post(verifyJWT, toggleCommentLike);
-router.route("/get-liked-videos").get(verifyJWT, getLikedVideo);
+router.route("/:videoId/likes").post(verifyJWT, toggleVideoLike);
+router.route("/c/:commentId/likes").post(verifyJWT, toggleCommentLike);
+router.route("/me/liked-videos").get(verifyJWT, getLikedVideo);
 
 export default router;
