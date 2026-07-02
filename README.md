@@ -62,22 +62,84 @@ VidVerse/
 └── README.md              # Project documentation (You are here)
 ```
 
----
+## 📡 API Endpoints
 
-## 📡 API Endpoints (Auth & Profile)
-
-All authentication/user routes are mapped under the prefix `/api/v1/users`.
+### 🔐 Authentication (`/api/v1/auth`)
 
 | Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
 | :--- | :--- | :---: | :--- | :--- |
-| `/register` | `POST` | No | Creates a new user profile and uploads media | Form-Data: `fullname`, `username`, `email`, `password`, files: `avatar` (required), `coverImage` (optional) |
-| `/login` | `POST` | No | Authenticates user and issues HTTP-only cookies | JSON: `email`, `password` |
-| `/logout` | `POST` | Yes | Logs out the current user and clears credentials | None |
-| `/current-user` | `GET` | Yes | Retrieves user account metadata | None |
-| `/change-password` | `POST` | Yes | Modifies password security credentials | JSON: `oldPassword`, `newPassword` |
-| `/update-user-details` | `PATCH` | Yes | Modifies basic metadata | JSON: `fullname`, `username`, `email` |
-| `/update-avatar` | `PATCH` | Yes | Modifies the profile photo on Cloudinary | Form-Data: file `avatar` (required) |
-| `/update-cover-image`| `PATCH` | Yes | Modifies the cover backdrop on Cloudinary | Form-Data: file `coverImage` (required) |
+| `/register` | `POST` | No | Register a new user and upload profile media | Form-Data: `fullname`, `username`, `email`, `password`, files: `avatar` (req), `coverImage` (opt) |
+| `/login` | `POST` | No | Authenticate user and issue cookies | JSON: `email` or `username`, `password` |
+| `/logout` | `PATCH` | Yes | Log out the user and clear credentials | None |
+| `/change-password` | `POST` | Yes | Update password security credentials | JSON: `oldPassword`, `newPassword` |
+
+### 👤 User Profiles (`/api/v1/users`)
+
+| Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
+| :--- | :--- | :---: | :--- | :--- |
+| `/me` | `GET` | Yes | Get the current authenticated user | None |
+| `/me` | `PATCH` | Yes | Update user details (fullname, email, username) | JSON: `fullname`, `username`, `email` |
+| `/me/avatar` | `PATCH` | Yes | Update user avatar image | Form-Data: file `avatar` (required) |
+| `/me/cover-image` | `PATCH` | Yes | Update user cover image | Form-Data: file `coverImage` (required) |
+| `/channels/:username` | `GET` | Yes | Fetch channel profile details for a user | None |
+| `/me/watch-history` | `GET` | Yes | Fetch watch history of the logged-in user | None |
+
+### 📹 Videos (`/api/v1/videos`)
+
+| Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
+| :--- | :--- | :---: | :--- | :--- |
+| `/video` | `POST` | Yes | Publish a new video to the channel | Form-Data: `title`, `description`, files: `video` (req), `thumbnail` (req) |
+| `/me` | `GET` | Yes | Fetch videos uploaded by the logged-in user | None |
+| `/:videoId` | `GET` | Yes | Retrieve video details by ID | None |
+| `/:videoId` | `DELETE` | Yes | Delete a video by ID | None |
+| `/channels/:channelId` | `GET` | Yes | Fetch all videos for a specific channel | None |
+| `/` | `GET` | Yes | Query and paginate videos (all channels) | Query parameters (page, limit, query, sortBy, sortType) |
+| `/:videoId/publish` | `PATCH` | Yes | Toggle publish/unpublish status | None |
+| `/update-video/:videoId` | `PATCH` | Yes | Update video title, description, or thumbnail | Form-Data: `title`, `description`, file: `thumbnail` |
+
+### 💬 Comments (`/api/v1/comments`)
+
+| Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
+| :--- | :--- | :---: | :--- | :--- |
+| `/:videoId/comments` | `POST` | Yes | Add a comment to a video | JSON: `content` |
+| `/:videoId/comments` | `GET` | Yes | Get all comments for a video (paginated) | Query parameters (page, limit) |
+| `/:commentId/comments` | `PATCH` | Yes | Edit an existing comment | JSON: `content` |
+| `/:commentId/comments` | `DELETE` | Yes | Delete a comment | None |
+
+### 👍 Likes (`/api/v1/likes`)
+
+| Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
+| :--- | :--- | :---: | :--- | :--- |
+| `/:videoId/likes` | `POST` | Yes | Toggle like status on a video | None |
+| `/c/:commentId/likes` | `POST` | Yes | Toggle like status on a comment | None |
+| `/me/liked-videos` | `GET` | Yes | Get list of all videos liked by the user | None |
+
+### 🔔 Subscriptions (`/api/v1/subscription`)
+
+| Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
+| :--- | :--- | :---: | :--- | :--- |
+| `/channels/:channelId` | `POST` | Yes | Toggle channel subscription (subscribe/unsubscribe) | None |
+| `/users/:userId` | `GET` | Yes | Get list of channels the user is subscribed to | None |
+| `/channels/:channelId/subscribers` | `GET` | Yes | Get list of subscribers for a channel | None |
+
+### 📂 Playlists (`/api/v1/playlists`)
+
+| Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
+| :--- | :--- | :---: | :--- | :--- |
+| `/playlist` | `POST` | Yes | Create a new playlist | JSON: `name`, `description` |
+| `/:playlistId` | `GET` | Yes | Get playlist details by ID | None |
+| `/:playlistId` | `PATCH` | Yes | Update playlist name and description | JSON: `name`, `description` |
+| `/:playlistId` | `DELETE` | Yes | Delete a playlist | None |
+| `/p/:playlistId/v/:videoId` | `PATCH` | Yes | Add a video to a playlist | None |
+| `/p/:playlistId/v/:videoId` | `DELETE` | Yes | Remove a video from a playlist | None |
+| `/users/:userId` | `GET` | Yes | Fetch all playlists created by a user | None |
+
+### 📊 Dashboard (`/api/v1/dashboard`)
+
+| Endpoint | HTTP Method | Auth Required | Description | Request Body / Files |
+| :--- | :--- | :---: | :--- | :--- |
+| `/channel-stats/:userId` | `GET` | Yes | Get channel statistics (subscribers, views, likes, videos) | None |
+| `/channel-videos/:userId` | `GET` | Yes | Get all videos created by the channel owner | None |
 
 ---
 
@@ -145,6 +207,7 @@ Ensure you have the following installed:
 - [x] Implement robust JWT access/refresh token authentication flow
 - [x] Integrate Cloudinary storage and Multer middleware for file uploads
 - [x] Develop secure endpoints for user details, avatar, and cover image editing
+- [x] Code and expose full Backend API endpoints (Videos, Comments, Likes, Subscriptions, Playlists, and Dashboard stats)
 - [ ] Initialize the Frontend React client inside the `/frontend` directory
 - [ ] Implement video playback, playlists creation, and user dashboard UI
 - [ ] Wire React interface actions to the Backend REST API handlers
