@@ -1,0 +1,272 @@
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { Heart, ListPlus, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+import VideoPlayer from '../components/video/VideoPlayer';
+import CommentCard from '../components/comment/CommentCard';
+import VideoCard from '../components/video/VideoCard';
+import Skeleton from '../components/ui/Skeleton';
+import Button from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
+
+export default function WatchVideo() {
+  const { videoId } = useParams();
+  const { register, handleSubmit, reset } = useForm();
+
+  // Layout states
+  const [isTheaterMode, setIsTheaterMode] = useState(false);
+  
+  // Data states (null represents loading state)
+  // TODO: Backend Integration
+  const [video, setVideo] = useState(null);
+  const [comments, setComments] = useState(null);
+  const [recommendations, setRecommendations] = useState(null);
+
+  const handleCommentSubmit = (data) => {
+    if (!data.commentText.trim()) return;
+    // TODO: Backend Integration
+    toast.success('Comment submitted! (TODO: Backend Integration)');
+    reset();
+  };
+
+  const handleToggleLike = () => {
+    // TODO: Backend Integration
+    toast.success('Video liked status toggled');
+  };
+
+  const handleSaveToPlaylist = () => {
+    // TODO: Backend Integration
+    toast.success('Added to playlist');
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success('Video link copied to clipboard!');
+  };
+
+  // Sample open source video stream for custom player controls testing
+  const sampleVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  const samplePoster = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
+
+  return (
+    <div className="font-sans text-white flex flex-col gap-6">
+      {/* Upper Section: Theater Mode vs Standard grid */}
+      <div className={`grid grid-cols-1 ${isTheaterMode ? 'w-full' : 'lg:grid-cols-3'} gap-6`}>
+        {/* Main Video Segment */}
+        <div className={isTheaterMode ? 'w-full' : 'lg:col-span-2'}>
+          {/* Custom Video Player */}
+          <VideoPlayer 
+            src={sampleVideoUrl} 
+            poster={samplePoster}
+            onTheaterModeToggle={(val) => setIsTheaterMode(val)}
+          />
+
+          {/* Under-Player Metadata & Details */}
+          {video === null ? (
+            /* Loading Details skeleton */
+            <div className="flex flex-col gap-4 mt-5">
+              <Skeleton variant="text" className="w-3/4 h-5" />
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-brand-border pb-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton variant="circle" className="w-10 h-10" />
+                  <div className="flex flex-col gap-1">
+                    <Skeleton variant="text" className="w-24 h-3.5" />
+                    <Skeleton variant="text" className="w-16 h-3" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton variant="rectangle" className="w-20 h-8" />
+                  <Skeleton variant="rectangle" className="w-20 h-8" />
+                </div>
+              </div>
+              <Skeleton variant="rectangle" className="w-full h-24" />
+            </div>
+          ) : (
+            /* Populated video metadata details */
+            <div className="flex flex-col gap-4 mt-5">
+              {/* TODO: Backend Integration */}
+              <h1 className="text-xl font-bold text-white leading-snug">
+                {video.title}
+              </h1>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-brand-border pb-4">
+                {/* Channel / Subscriber Info */}
+                <div className="flex items-center gap-3">
+                  {video.channel && (
+                    <>
+                      <Avatar src={video.channel.avatar} name={video.channel.fullname} size="md" />
+                      <div>
+                        <h4 className="text-sm font-semibold text-white">{video.channel.fullname}</h4>
+                        <p className="text-xs text-zinc-400">{video.channel.subscribersCount} subscribers</p>
+                      </div>
+                    </>
+                  )}
+                  <Button variant="primary" size="sm" className="ml-2">
+                    Subscribe
+                  </Button>
+                </div>
+
+                {/* Video Action Controls */}
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    icon={Heart} 
+                    onClick={handleToggleLike}
+                    className={video.isLiked ? 'text-brand-accent border-brand-accent/20 bg-brand-accent/5' : ''}
+                  >
+                    {video.likesCount}
+                  </Button>
+                  <Button variant="secondary" size="sm" icon={ListPlus} onClick={handleSaveToPlaylist}>
+                    Save
+                  </Button>
+                  <Button variant="secondary" size="sm" icon={Share2} onClick={handleShare}>
+                    Share
+                  </Button>
+                </div>
+              </div>
+
+              {/* Description Box */}
+              <div className="bg-brand-surface border border-brand-border rounded-xl p-4">
+                <div className="flex items-center gap-2 text-xs text-zinc-400 font-semibold mb-2">
+                  <span>{video.views} views</span>
+                  <span>&bull;</span>
+                  <span>{video.createdAt}</span>
+                </div>
+                <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                  {video.description}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Comments Section */}
+          <div className="mt-8 flex flex-col gap-6">
+            <h3 className="text-base font-semibold text-white">Comments</h3>
+
+            {/* Comment Form Input */}
+            <form onSubmit={handleSubmit(handleCommentSubmit)} className="flex items-start gap-4">
+              <Avatar name="Me" size="sm" />
+              <div className="flex-1 flex flex-col gap-3">
+                <textarea
+                  placeholder="Add a public comment..."
+                  rows={2}
+                  {...register('commentText', { required: true })}
+                  className="w-full bg-transparent border-b border-brand-border focus:border-white focus:outline-none text-sm text-white py-1 transition-colors resize-none"
+                />
+                <div className="flex justify-end">
+                  <Button type="submit" size="sm">
+                    Comment
+                  </Button>
+                </div>
+              </div>
+            </form>
+
+            {/* Comments Lists */}
+            {comments === null ? (
+              /* Comments loading state skeleton */
+              <div className="flex flex-col gap-4 mt-2">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className="flex gap-4 p-4 border border-brand-border rounded-xl">
+                    <Skeleton variant="circle" className="w-8 h-8" />
+                    <div className="flex-1 flex flex-col gap-2">
+                      <Skeleton variant="text" className="w-24 h-3.5" />
+                      <Skeleton variant="text" className="w-full h-3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : comments.length === 0 ? (
+              /* Comments empty state */
+              <p className="text-xs text-zinc-500 py-6 text-center">
+                No comments yet. Be the first to comment!
+              </p>
+            ) : (
+              /* Comments populated state */
+              <div className="flex flex-col gap-4 mt-2">
+                {/* TODO: Backend Integration */}
+                {comments.map((comment) => (
+                  <CommentCard key={comment.id} comment={comment} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Side Column: Recommendations (Only visible in standard grid) */}
+        {!isTheaterMode && (
+          <div className="lg:col-span-1 flex flex-col gap-4">
+            <h3 className="text-sm font-semibold text-zinc-400 select-none uppercase tracking-wider mb-1">
+              Up Next
+            </h3>
+
+            {recommendations === null ? (
+              /* Recommendations loading skeletons */
+              <div className="flex flex-col gap-4">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div key={idx} className="flex flex-col gap-2.5">
+                    <Skeleton variant="rectangle" className="aspect-video w-full" />
+                    <div className="flex gap-3 mt-1">
+                      <Skeleton variant="circle" className="w-7 h-7" />
+                      <div className="flex-1 flex flex-col gap-1.5">
+                        <Skeleton variant="text" className="w-5/6 h-3" />
+                        <Skeleton variant="text" className="w-1/2 h-3" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recommendations.length === 0 ? (
+              /* Recommendations empty state */
+              <p className="text-xs text-zinc-500 py-6 text-center">
+                No recommendations available.
+              </p>
+            ) : (
+              /* Recommendations populated state */
+              <div className="flex flex-col gap-4">
+                {/* TODO: Backend Integration */}
+                {recommendations.map((rec) => (
+                  <VideoCard key={rec.id} video={rec} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Recommendations drawer when Theater mode is active */}
+      {isTheaterMode && (
+        <div className="border-t border-brand-border pt-8 mt-6">
+          <h3 className="text-sm font-semibold text-zinc-400 select-none uppercase tracking-wider mb-4">
+            Recommended Videos
+          </h3>
+          {recommendations === null ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="flex flex-col gap-2.5">
+                  <Skeleton variant="rectangle" className="aspect-video w-full" />
+                  <div className="flex gap-3 mt-1">
+                    <Skeleton variant="circle" className="w-7 h-7" />
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <Skeleton variant="text" className="w-5/6 h-3" />
+                      <Skeleton variant="text" className="w-1/2 h-3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {/* TODO: Backend Integration */}
+              {recommendations.map((rec) => (
+                <VideoCard key={rec.id} video={rec} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

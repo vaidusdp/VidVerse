@@ -31,7 +31,7 @@ router.route("/video").post(
 
 router.route("/me").get(verifyJWT, getMyVideos);
 
-router.route("/:videoId").get(verifyJWT, getVideoById)
+router.route("/:videoId").get(verifyJWT, getVideoById);
 
 router.route("/channels/:channelId").get(verifyJWT, getChannelVideos);
 
@@ -50,8 +50,6 @@ router.route("/update-video/:videoId").patch(
   updateVideo,
 );
 
-router
-  .route("/:videoId")
-  .delete(verifyJWT, deleteVideo);
+router.route("/:videoId").delete(verifyJWT, deleteVideo);
 
 export default router;
