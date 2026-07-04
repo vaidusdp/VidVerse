@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Heart, ListPlus, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+import videoServices from '../services/video.services';
 
 import VideoPlayer from '../components/video/VideoPlayer';
 import CommentCard from '../components/comment/CommentCard';
@@ -23,6 +25,21 @@ export default function WatchVideo() {
   const [video, setVideo] = useState(null);
   const [comments, setComments] = useState(null);
   const [recommendations, setRecommendations] = useState(null);
+
+  useEffect(() => {
+    const fetchVideo = async () => {
+      try {
+        const response = await videoServices.getVideoById(videoId);
+        setVideo(response.data);
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message ||
+          "Failed to fetch video."
+        );
+      }
+    };
+    fetchVideo();
+  }, [videoId]);
 
   const handleCommentSubmit = (data) => {
     if (!data.commentText.trim()) return;
@@ -46,9 +63,6 @@ export default function WatchVideo() {
     toast.success('Video link copied to clipboard!');
   };
 
-  // Sample open source video stream for custom player controls testing
-  const sampleVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-  const samplePoster = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
 
   return (
     <div className="font-sans text-white flex flex-col gap-6">
@@ -58,9 +72,9 @@ export default function WatchVideo() {
         <div className={isTheaterMode ? 'w-full' : 'lg:col-span-2'}>
           {/* Custom Video Player */}
           <VideoPlayer 
-            src={sampleVideoUrl} 
-            poster={samplePoster}
-            onTheaterModeToggle={(val) => setIsTheaterMode(val)}
+            src={video?.videoFile} 
+            poster={video?.thumbnail}
+            onTheaterModeToggle={setIsTheaterMode}
           />
 
           {/* Under-Player Metadata & Details */}
@@ -94,12 +108,12 @@ export default function WatchVideo() {
               <div className="flex flex-wrap items-center justify-between gap-4 border-b border-brand-border pb-4">
                 {/* Channel / Subscriber Info */}
                 <div className="flex items-center gap-3">
-                  {video.channel && (
+                  {video.owner && (
                     <>
-                      <Avatar src={video.channel.avatar} name={video.channel.fullname} size="md" />
+                      <Avatar src={video.owner.avatar} name={video.owner.fullname} size="md" />
                       <div>
-                        <h4 className="text-sm font-semibold text-white">{video.channel.fullname}</h4>
-                        <p className="text-xs text-zinc-400">{video.channel.subscribersCount} subscribers</p>
+                        <h4 className="text-sm font-semibold text-white">{video.owner.fullname}</h4>
+                        <p className="text-xs text-zinc-400">{video.owner.username} subscribers</p>
                       </div>
                     </>
                   )}
@@ -188,7 +202,7 @@ export default function WatchVideo() {
               <div className="flex flex-col gap-4 mt-2">
                 {/* TODO: Backend Integration */}
                 {comments.map((comment) => (
-                  <CommentCard key={comment.id} comment={comment} />
+                  <CommentCard key={comment._id} comment={comment} />
                 ))}
               </div>
             )}
@@ -228,7 +242,7 @@ export default function WatchVideo() {
               <div className="flex flex-col gap-4">
                 {/* TODO: Backend Integration */}
                 {recommendations.map((rec) => (
-                  <VideoCard key={rec.id} video={rec} />
+                  <VideoCard key={rec._id} video={rec} />
                 ))}
               </div>
             )}

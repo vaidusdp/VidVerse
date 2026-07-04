@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
@@ -7,17 +7,24 @@ import toast from 'react-hot-toast';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 
+import useAuthStore from '../store/auth.store';
+
 export default function Login() {
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const [loading, setLoading] = useState(false);
+  const login = useAuthStore((state) => state.login);
+  const loading = useAuthStore((state) => state.loading);
 
-  const handleFormSubmit = (data) => {
-    setLoading(true);
-    // TODO: Backend Integration
-    toast.success('Logged in successfully! (TODO: Backend Integration)');
-    setLoading(false);
-    navigate('/');
+  const handleFormSubmit = async (data) => {
+    try {
+      await login(data);
+
+      toast.success("Welcome back!")
+      
+      navigate("/", {replace: true});
+    } catch (error) {
+      toast.error(error.response?.data?.message || error?.message || "Login failed.");
+    }
   };
 
   return (
@@ -35,11 +42,11 @@ export default function Login() {
       {/* Login Form */}
       <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col gap-4">
         <Input
-          label="Username or Email"
+          label="Email"
           placeholder="e.g. johndoe"
-          error={errors.identity?.message}
-          {...register('identity', { 
-            required: 'Please enter your username or email address' 
+          error={errors.email?.message}
+          {...register('email', { 
+            required: 'Please enter your email address' 
           })}
         />
 

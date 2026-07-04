@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Camera, Save, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -7,8 +7,11 @@ import Avatar from '../components/ui/Avatar';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 
+import userServices from '../services/user.services';
+import useAuthStore from '../store/auth.store';
+
 export default function Profile() {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const { 
     register: registerPass, 
     handleSubmit: handleSubmitPass, 
@@ -16,32 +19,103 @@ export default function Profile() {
     formState: { errors: errorsPass } 
   } = useForm();
 
-  // Data states (null represents loading state)
-  // TODO: Backend Integration - replace with profile endpoints fetch
-  const [profile, setProfile] = useState({
-    username: '',
-    fullname: '',
-    email: '',
-    avatar: '',
-    coverImage: ''
-  });
+  const user = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
+  useEffect(() => {
+    if(!user){
+      return;
+    }
+
+    reset({
+      fullname: user.fullname,
+      username: user.username,
+      email: user.email,
+    });
+  }, [user, reset])
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
 
-  const handleProfileSubmit = (data) => {
-    // TODO: Backend Integration
-    toast.success('Profile details submitted! (TODO: Backend Integration)');
+  const handleAvatarChange = async (e) => {
+    const files = e.target.files?.[0];
+
+    if(!files) return;
+
+    try {
+      setAvatarFile(files);
+      const formData = new FormData();
+      formData.append("avatar", files);
+
+      const response = await userServices.updateAvatar(formData);
+
+      setUser(response.data);
+      setAvatarFile(null);
+      toast.success(response.message);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed To Update Avatar"
+      )
+    }
+  }
+
+  const handleCoverImageChange = async (e) => {
+    const files = e.target.files?.[0];
+
+    if(!files) return;
+
+    try {
+      setCoverFile(files);
+      const formData = new FormData();
+      formData.append("coverImage", files);
+
+      const response = await userServices.updateCoverImage(formData);
+
+      setUser(response.data);
+      setCoverFile(null);
+      toast.success(response.message);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed To Update Cover Image"
+      )
+    }
+  }
+
+  const handleProfileSubmit = async (data) => {
+    try {
+      const response = await userServices.updateDetails(data);
+      setUser(response.data);
+      toast.success(response.message);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to update profile."
+      )
+    }    
   };
 
-  const handlePasswordSubmit = (data) => {
+  const handlePasswordSubmit = async (data) => {
     if (data.newPassword !== data.confirmPassword) {
       toast.error('New passwords do not match');
       return;
     }
-    // TODO: Backend Integration
-    toast.success('Password updated successfully! (TODO: Backend Integration)');
-    resetPass();
+    
+    try {
+      await userServices.changePassword({
+        oldPassword: data.oldPassword,
+        newPassword: data.newPassword
+      });
+
+      toast.success("Password updated successfully.");
+      resetPass();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to update password."
+      );
+    }
+    
   };
 
   return (
@@ -56,15 +130,15 @@ export default function Profile() {
       <div className="relative h-32 sm:h-44 bg-zinc-800 rounded-xl overflow-hidden border border-brand-border group">
         {coverFile ? (
           <img src={URL.createObjectURL(coverFile)} alt="Cover Banner" className="w-full h-full object-cover" />
-        ) : profile.coverImage ? (
-          <img src={profile.coverImage} alt="Cover Banner" className="w-full h-full object-cover" />
+        ) : user?.coverImage ? (
+          <img src={user?.coverImage} alt="Cover Banner" className="w-full h-full object-cover" />
         ) : null}
         
         <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer select-none">
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => e.target.files?.[0] && setCoverFile(e.target.files[0])}
+            onChange={handleCoverImageChange}
             className="hidden"
           />
           <div className="flex items-center gap-2 bg-brand-surface border border-brand-border px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-lg">
@@ -78,15 +152,15 @@ export default function Profile() {
       <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12 px-4 relative z-10">
         <div className="relative group rounded-full overflow-hidden border-4 border-brand-bg bg-zinc-800 shadow-xl">
           <Avatar 
-            src={avatarFile ? URL.createObjectURL(avatarFile) : profile.avatar} 
-            name={profile.fullname || 'U'} 
+            src={avatarFile ? URL.createObjectURL(avatarFile) : user?.avatar} 
+            name={user?.fullname || 'U'} 
             size="xl" 
           />
           <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer select-none">
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => e.target.files?.[0] && setAvatarFile(e.target.files[0])}
+              onChange={handleAvatarChange}
               className="hidden"
             />
             <Camera size={18} className="text-white" />
@@ -111,7 +185,6 @@ export default function Profile() {
           <Input
             label="Full Name"
             placeholder="e.g. John Doe"
-            defaultValue={profile.fullname}
             error={errors.fullname?.message}
             {...register('fullname', { required: 'Full name is required' })}
           />
@@ -119,7 +192,6 @@ export default function Profile() {
           <Input
             label="Username"
             placeholder="e.g. johndoe"
-            defaultValue={profile.username}
             error={errors.username?.message}
             {...register('username', { required: 'Username is required' })}
           />
@@ -129,7 +201,6 @@ export default function Profile() {
           label="Email Address"
           type="email"
           placeholder="e.g. john@example.com"
-          defaultValue={profile.email}
           error={errors.email?.message}
           {...register('email', { 
             required: 'Email is required',

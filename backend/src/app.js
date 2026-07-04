@@ -4,10 +4,6 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
-app.use(express.json({limit: "16kb"}));
-app.use(express.urlencoded({extended: true, limit: "16kb"}));
-app.use(express.static("public"));
-
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN?.split(",") || "http://localhost:5173",
@@ -19,16 +15,16 @@ app.use(
 
 app.use(cookieParser());
 
+app.use(express.json({limit: "16kb"}));
+app.use(express.urlencoded({extended: true, limit: "16kb"}));
+app.use(express.static("public"));
+
 app.get("/api/v1/home", (req, res) => {
   console.log("Testing Home");
 });
 
-// Auth
-import authRoutes from "./routes/auth.route.js";
-app.use("/api/v1/auth", authRoutes);
-
 // User
-import userRoutes from "./routes/user.route.js";
+import userRoutes from "./routes/auth.route.js";
 app.use("/api/v1/users", userRoutes);
 
 // Video

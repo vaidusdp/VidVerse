@@ -6,14 +6,17 @@ import toast from 'react-hot-toast';
 
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import useAuthStore from '../store/auth.store';
 
 export default function Register() {
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors } } = useForm();
   
+  const registerUser = useAuthStore((state) => state.register);
+  const loading = useAuthStore((state) => state.loading);
+
   const [avatarFile, setAvatarFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const handleAvatarChange = (e) => {
     if (e.target.files?.[0]) {
@@ -27,17 +30,33 @@ export default function Register() {
     }
   };
 
-  const handleFormSubmit = (data) => {
-    if (!avatarFile) {
-      toast.error('An avatar image file is required for registration');
-      return;
+  const handleFormSubmit = async (data) => {
+    try {
+      const formData = new FormData();
+
+      formData.append("fullname", data.fullname);
+      formData.append("username", data.username);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      formData.append("avatar", avatarFile);
+
+      if (coverFile) {
+        formData.append("coverImage", coverFile);
+      }
+
+      await registerUser(formData);
+
+      toast.success("Account created successfully!");
+
+      navigate("/login", { replace: true });
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Registration failed."
+      );
     }
-    
-    setLoading(true);
-    // TODO: Backend Integration
-    toast.success('Registration details submitted! (TODO: Backend Integration)');
-    setLoading(false);
-    navigate('/login');
   };
 
   return (

@@ -13,13 +13,12 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Username is required"],
       trim: true,
-      lowerCase: true,
+      lowercase: true,
       unique: true,
     },
     email: {
       type: String,
       required: [true, "Email is required"],
-      lowerCase: true,
       unique: true,
     },
     password: {
@@ -32,7 +31,6 @@ const userSchema = new Schema(
     },
     coverImage: {
       type: String,
-      required: true,
     },
     watchHistory: [
       {

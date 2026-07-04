@@ -14,7 +14,7 @@ import {verifyJWT} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/video").post(
+router.route("/publish-video").post(
   verifyJWT,
   upload.fields([
     {
@@ -29,7 +29,7 @@ router.route("/video").post(
   publishVideo,
 );
 
-router.route("/me").get(verifyJWT, getMyVideos);
+router.route("/my-videos").get(verifyJWT, getMyVideos);
 
 router.route("/:videoId").get(verifyJWT, getVideoById);
 
@@ -50,6 +50,6 @@ router.route("/update-video/:videoId").patch(
   updateVideo,
 );
 
-router.route("/:videoId").delete(verifyJWT, deleteVideo);
+router.route("/delete/:videoId").delete(verifyJWT, deleteVideo);
 
 export default router;

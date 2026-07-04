@@ -73,7 +73,7 @@ const registerUser = asyncHandler(async (req, res) => {
       email,
       password,
       avatar: avatar.url,
-      coverImage: coverImage.url || "",
+      coverImage: coverImage?.url || "",
     });
 
     const createdUser = await User.findById(user._id).select(
@@ -281,7 +281,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new APIError(500, "Something went wrong while uploading avatar");
   }
 
-  await User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -293,7 +293,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new APIResponse(200, {}, "Avatar Updated Successfully"));
+    .json(new APIResponse(200, user, "Avatar Updated Successfully"));
 });
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
@@ -308,7 +308,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new APIError(500, "Something went wrong while uploading avatar");
   }
 
-  await User.findByIdAndUpdate(
+  const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -320,7 +320,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new APIResponse(200, {}, "Cover Image Updated Successfully"));
+    .json(new APIResponse(200, user, "Cover Image Updated Successfully"));
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {

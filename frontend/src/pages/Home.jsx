@@ -1,13 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Skeleton from '../components/ui/Skeleton';
 import VideoCard from '../components/video/VideoCard';
 import { Compass } from 'lucide-react';
+import videoServices from '../services/video.services';
+import toast from "react-hot-toast";
 
 export default function Home() {
-  // videos = null represents loading state (skeletons)
-  // videos = [] represents empty state
-  // TODO: Backend Integration - replace with API fetch
-  const [videos, setVideos] = useState(null); 
+  const [videos, setVideos] = useState([]); 
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true);
+        const response = await videoServices.getAllVideos();
+        setVideos(response.data);
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message ||
+          "Failed to fetch videos."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchVideos();
+  }, [])
   
   const [activeCategory, setActiveCategory] = useState('All');
 
@@ -36,7 +55,7 @@ export default function Home() {
       </div>
 
       {/* Main Grid View */}
-      {videos === null ? (
+      {loading ? (
         /* Loading Skeletons State */
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, idx) => (
@@ -70,7 +89,7 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {/* TODO: Backend Integration */}
           {videos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard key={video._id} video={video} />
           ))}
         </div>
       )}

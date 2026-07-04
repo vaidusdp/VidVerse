@@ -30,10 +30,14 @@ import NotFound from "./pages/NotFound";
 import CreatorDashboard from "./pages/CreatorDashboard";
 import MyVideos from "./pages/MyVideos";
 
+import useAuthStore from "./store/auth.store";
+
 export default function App() {
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
   useEffect(() => {
-    console.log("Base URL:", api.defaults.baseURL);
-  }, []);
+    checkAuth();
+  }, [checkAuth])
 
   return (
     <Router>
