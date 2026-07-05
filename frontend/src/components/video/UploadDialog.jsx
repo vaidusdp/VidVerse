@@ -9,7 +9,7 @@ import Button from '../ui/Button';
 
 import videoServices from '../../services/video.services';
 
-export default function UploadDialog({ isOpen, onClose }) {
+export default function UploadDialog({ isOpen, onClose, onSuccess }) {
   const {
     register, 
     handleSubmit, 
@@ -61,6 +61,7 @@ export default function UploadDialog({ isOpen, onClose }) {
       setVideoFile(null);
       setThumbnailFile(null);
       onClose();
+      if (onSuccess) onSuccess();
     } catch (error) {
       toast.error(
         error.response?.data?.message ||

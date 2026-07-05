@@ -3,7 +3,8 @@ import {
   Users, 
   Eye, 
   ThumbsUp, 
-  Video
+  Video,
+  Upload
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -11,11 +12,13 @@ import DashboardCard from '../components/dashboard/DashboardCard';
 import Skeleton from '../components/ui/Skeleton';
 import Button from '../components/ui/Button';
 import dashboardServices from '../services/dashboard.services';
+import UploadDialog from '../components/video/UploadDialog';
 
 export default function CreatorDashboard() {
   const [stats, setStats] = useState(null);
   const [upload, setUpload] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -41,9 +44,19 @@ export default function CreatorDashboard() {
   return (
     <div className="font-sans text-white flex flex-col gap-6">
       {/* Workspace Header */}
-      <div>
-        <h2 className="text-xl font-bold text-white">Channel Dashboard</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">Analyze and manage your content library.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">Channel Dashboard</h2>
+          <p className="text-xs text-zinc-500 mt-0.5">Analyze and manage your content library.</p>
+        </div>
+        <Button 
+          variant="primary" 
+          size="sm" 
+          icon={Upload} 
+          onClick={() => setIsUploadOpen(true)}
+        >
+          Upload Video
+        </Button>
       </div>
 
       {/* Analytics Metric Cards Grid */}
@@ -117,9 +130,17 @@ export default function CreatorDashboard() {
           <div className="flex flex-col items-center justify-center py-12 text-center max-w-xs mx-auto">
             <Video size={24} className="text-zinc-600 mb-3" />
             <h4 className="text-sm font-semibold text-white">No videos published</h4>
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-zinc-500 mt-1 mb-4">
               Upload your first video to start growing your channel.
             </p>
+            <Button 
+              variant="primary" 
+              size="sm" 
+              icon={Upload} 
+              onClick={() => setIsUploadOpen(true)}
+            >
+              Upload Video
+            </Button>
           </div>
         ) : (
           /* Uploads populated layout structure */
@@ -138,6 +159,26 @@ export default function CreatorDashboard() {
           </div>
         )}
       </div>
+      <UploadDialog 
+        isOpen={isUploadOpen} 
+        onClose={() => setIsUploadOpen(false)} 
+        onSuccess={async () => {
+          try {
+            setLoading(true);
+            const statsRes = await dashboardServices.getChannelStats();
+            setStats(statsRes.data.data);
+
+            const videosRes = await dashboardServices.getChannelVideos();
+            setUpload(videosRes.data.data);
+          } catch (error) {
+            toast.error(
+              error.response?.data?.message || "Failed to fetch dashboard statistics."
+            );
+          } finally {
+            setLoading(false);
+          }
+        }}
+      />
     </div>
   );
 }

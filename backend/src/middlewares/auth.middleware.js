@@ -23,10 +23,6 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
       throw new APIError(401, "Invalid Access Token");
     }
 
-    console.log("VERIFY JWT HIT");
-  console.log("Cookies:", req.cookies);
-  console.log("Headers:", req.headers.cookie);
-
     req.user = user;
     next();
   } catch (error) {

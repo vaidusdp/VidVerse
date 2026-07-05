@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Video, Edit, Trash2, Eye, Calendar, EyeOff } from 'lucide-react';
+import { Video, Edit, Trash2, Eye, Calendar, EyeOff, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import Skeleton from '../components/ui/Skeleton';
 import Button from '../components/ui/Button';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
 import EditVideoDialog from '../components/video/EditVideoDialog';
+import UploadDialog from '../components/video/UploadDialog';
 import Badge from '../components/ui/Badge';
 import videoServices from '../services/video.services';
 
 export default function MyVideos() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [targetVideoId, setTargetVideoId] = useState(null);
@@ -58,28 +60,38 @@ export default function MyVideos() {
     }
   };
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        setLoading(true);
-        const response = await videoServices.getMyVideos();
-        setVideos(response.data);
-      } catch (error) {
-        toast.error(error.response?.data?.message || "Failed to fetch videos.")
-      } finally {
-        setLoading(false);
-      }
+  const fetchVideos = async () => {
+    try {
+      setLoading(true);
+      const response = await videoServices.getMyVideos();
+      setVideos(response.data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch videos.")
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchVideos();
-  }, [])
+  }, []);
 
   return (
     <div className="font-sans text-white flex flex-col gap-6">
       {/* Page Header */}
-      <div>
-        <h2 className="text-xl font-bold text-white">Video Management</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">Edit metadata, check stats, or delete uploads.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">Video Management</h2>
+          <p className="text-xs text-zinc-500 mt-0.5">Edit metadata, check stats, or delete uploads.</p>
+        </div>
+        <Button 
+          variant="primary" 
+          size="sm" 
+          icon={Upload} 
+          onClick={() => setIsUploadOpen(true)}
+        >
+          Upload Video
+        </Button>
       </div>
 
       {/* Videos List Container */}
@@ -218,6 +230,11 @@ export default function MyVideos() {
         onSuccess={(updatedVideo) => {
           setVideos(prev => prev.map(v => v._id === updatedVideo._id ? updatedVideo : v));
         }}
+      />
+      <UploadDialog
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onSuccess={fetchVideos}
       />
     </div>
   );
