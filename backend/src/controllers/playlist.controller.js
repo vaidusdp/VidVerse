@@ -31,7 +31,14 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     throw new APIError(400, "Playlist Id is Invalid");
   }
 
-  const playlist = await Playlist.findById(playlistId);
+  const playlist = await Playlist.findById(playlistId)
+    .populate({
+      path: "videos",
+      populate: {
+        path: "owner",
+        select: "_id fullname username avatar"
+      }
+    });
   if (!playlist) {
     throw new APIError(404, "Playlist not found");
   }

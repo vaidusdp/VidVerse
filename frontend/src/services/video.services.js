@@ -51,7 +51,7 @@ const videoServices = {
 
     async togglePublishStatus(videoId) {
     const response = await api.patch(
-        `/videos/${videoId}/publish`
+        `/videos/${videoId}/toggle-publish`
         );
 
         return response.data;
@@ -62,6 +62,11 @@ const videoServices = {
         `/videos/delete/${videoId}`
         );
 
+        return response.data;
+    },
+
+    async getReccomendedVideo(videoId){
+        const response = await api.get(`/videos/recommended/${videoId}`);
         return response.data;
     },
 }

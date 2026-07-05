@@ -36,7 +36,6 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      like,
       new APIResponse(
         200,
         like,
@@ -88,18 +87,26 @@ const getLikedVideo = asyncHandler(async (req, res) => {
 
   const likedVideos = await Like.find({
     likedBy: userId,
-    video: {$exists: true},
+    video: { $exists: true },
   }).populate({
     path: "video",
     select:
-      "videoFile thumbnail title description views durationInMinutes createdAt",
+      "videoFile thumbnail title description views durationInMinutes createdAt owner",
+    populate: {
+      path: "owner",
+      select: "fullname username avatar",
+    },
   });
 
-  return res
-    .status(200)
-    .json(
-      new APIResponse(200, likedVideos, "Liked Videos Fetched Successfully"),
-    );
+  const videos = likedVideos.map((like) => like.video);
+
+  return res.status(200).json(
+    new APIResponse(
+      200,
+      videos,
+      "Liked Videos Fetched Successfully"
+    )
+  );
 });
 
 export {toggleVideoLike, toggleCommentLike, getLikedVideo};

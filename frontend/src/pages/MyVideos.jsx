@@ -1,39 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Video, Edit, Trash2, Eye, Calendar, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import Skeleton from '../components/ui/Skeleton';
 import Button from '../components/ui/Button';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
+import EditVideoDialog from '../components/video/EditVideoDialog';
 import Badge from '../components/ui/Badge';
+import videoServices from '../services/video.services';
 
 export default function MyVideos() {
-  // Data states (null represents loading state)
-  // TODO: Backend Integration
-  const [videos, setVideos] = useState(null);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Deletion States
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [targetVideoId, setTargetVideoId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState(null);
 
   const handleDeleteTrigger = (videoId) => {
     setTargetVideoId(videoId);
     setIsDeleteOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    setIsDeleting(true);
-    // TODO: Backend Integration
-    toast.success('Video deleted successfully');
-    setIsDeleting(false);
-    setIsDeleteOpen(false);
+  const handleConfirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+
+      await videoServices.deleteVideo(targetVideoId);
+      setVideos(prev => prev.filter(v => v._id !== targetVideoId))
+      toast.success('Video deleted successfully');
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to delete video."
+      );
+
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteOpen(false);
+      setTargetVideoId(null);
+    }
   };
 
-  const handleTogglePublish = (videoId) => {
-    // TODO: Backend Integration
-    toast.success('Publish status toggled');
+  const handleTogglePublish = async (videoId) => {
+    try {
+      await videoServices.togglePublishStatus(videoId);
+      setVideos(prev => prev.map(v => v._id === videoId ? {...v, isPublished: !v.isPublished} : v));
+      toast.success('Publish status toggled');
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to update publish status."
+      );
+    }
   };
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true);
+        const response = await videoServices.getMyVideos();
+        setVideos(response.data);
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to fetch videos.")
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchVideos();
+  }, [])
 
   return (
     <div className="font-sans text-white flex flex-col gap-6">
@@ -45,7 +84,7 @@ export default function MyVideos() {
 
       {/* Videos List Container */}
       <div className="bg-brand-surface border border-brand-border rounded-xl overflow-hidden">
-        {videos === null ? (
+        {loading ? (
           /* Table loading skeleton rows */
           <div className="divide-y divide-brand-border p-4 flex flex-col gap-4">
             {Array.from({ length: 4 }).map((_, idx) => (
@@ -84,7 +123,7 @@ export default function MyVideos() {
               </thead>
               <tbody className="divide-y divide-brand-border">
                 {videos.map((video) => (
-                  <tr key={video.id} className="hover:bg-white/2 transition-colors">
+                  <tr key={video._id} className="hover:bg-white/2 transition-colors">
                     {/* Thumbnail & Title */}
                     <td className="p-4 flex gap-3.5 items-center min-w-[280px]">
                       <div className="w-20 aspect-video rounded overflow-hidden bg-zinc-800 shrink-0 border border-brand-border">
@@ -102,7 +141,7 @@ export default function MyVideos() {
                           {video.isPublished ? 'Published' : 'Draft'}
                         </Badge>
                         <button 
-                          onClick={() => handleTogglePublish(video.id)}
+                          onClick={() => handleTogglePublish(video._id)}
                           className="text-xs text-zinc-500 hover:text-white transition-colors underline"
                         >
                           Change
@@ -114,7 +153,7 @@ export default function MyVideos() {
                     <td className="p-4 text-zinc-400 whitespace-nowrap">
                       <span className="flex items-center gap-1.5 text-xs">
                         <Calendar size={13} />
-                        {video.createdAt}
+                        {new Date(video.createdAt).toLocaleString()}
                       </span>
                     </td>
 
@@ -133,14 +172,17 @@ export default function MyVideos() {
                           variant="ghost" 
                           size="sm"
                           icon={Edit} 
-                          onClick={() => toast('Edit details dialog / TODO')}
+                          onClick={() => {
+                            setSelectedVideo(video);
+                            setIsEditOpen(true);
+                          }}
                           title="Edit Details"
                         />
                         <Button 
                           variant="ghost" 
                           size="sm"
                           icon={Trash2} 
-                          onClick={() => handleDeleteTrigger(video.id)}
+                          onClick={() => handleDeleteTrigger(video._id)}
                           className="text-red-500 hover:bg-red-500/10"
                           title="Delete Video"
                         />
@@ -164,6 +206,18 @@ export default function MyVideos() {
         message="This action will permanently delete this video, and comments linked to it. This cannot be undone."
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      <EditVideoDialog
+        isOpen={isEditOpen}
+        onClose={() => {
+            setIsEditOpen(false);
+            setSelectedVideo(null);
+        }}
+        video={selectedVideo}
+        onSuccess={(updatedVideo) => {
+          setVideos(prev => prev.map(v => v._id === updatedVideo._id ? updatedVideo : v));
+        }}
       />
     </div>
   );

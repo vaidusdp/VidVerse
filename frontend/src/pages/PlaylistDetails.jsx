@@ -1,167 +1,216 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Trash2, Edit2, Play, ListVideo } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { Trash2, Edit2, ListVideo } from "lucide-react";
+import toast from "react-hot-toast";
 
-import Skeleton from '../components/ui/Skeleton';
-import Button from '../components/ui/Button';
-import ConfirmationDialog from '../components/ui/ConfirmationDialog';
-import VideoCard from '../components/video/VideoCard';
+import Button from "../components/ui/Button";
+import Skeleton from "../components/ui/Skeleton";
+import ConfirmationDialog from "../components/ui/ConfirmationDialog";
+import EditPlaylistDialog from "../components/playlist/EditPlaylistDialog";
+
+import playlistService from "../services/playlist.services";
 
 export default function PlaylistDetails() {
   const { playlistId } = useParams();
   const navigate = useNavigate();
 
-  // Data states: playlist = null represents loading state
-  // TODO: Backend Integration
   const [playlist, setPlaylist] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Dialog States
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDeletePlaylist = () => {
-    setIsDeleting(true);
-    // TODO: Backend Integration
-    toast.success('Playlist deleted successfully');
-    setIsDeleting(false);
-    setIsDeleteOpen(false);
-    navigate('/playlists');
+  useEffect(() => {
+    const fetchPlaylist = async () => {
+      try {
+        const response = await playlistService.getPlaylist(playlistId);
+        setPlaylist(response.data);
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message || "Failed to load playlist."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlaylist();
+  }, [playlistId]);
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+
+      await playlistService.deletePlaylist(playlistId);
+
+      toast.success("Playlist deleted");
+      navigate("/playlists");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Delete failed");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteOpen(false);
+    }
   };
 
-  const handleRemoveVideo = (videoId) => {
-    // TODO: Backend Integration
-    toast.success('Video removed from playlist');
+  const handleRemoveVideo = async (videoId) => {
+    try {
+      await playlistService.deleteVideoFromPlaylist(playlistId, videoId);
+
+      setPlaylist((prev) => ({
+        ...prev,
+        videos: prev.videos.filter((v) => v._id !== videoId),
+      }));
+
+      toast.success("Video removed");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed");
+    }
   };
+
+  if (loading || !playlist) {
+    return (
+      <div className="grid lg:grid-cols-3 gap-6">
+        <Skeleton variant="rectangle" className="h-80 rounded-xl" />
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} variant="rectangle" className="h-28 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="font-sans text-white">
-      {playlist === null ? (
-        /* Loading Skeletons layout */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 bg-brand-surface border border-brand-border rounded-xl p-5 flex flex-col gap-4">
-            <Skeleton variant="rectangle" className="aspect-video w-full" />
-            <Skeleton variant="text" className="w-3/4 h-5" />
-            <Skeleton variant="text" className="w-full h-3" />
-            <Skeleton variant="text" className="w-1/2 h-3" />
-          </div>
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            {Array.from({ length: 3 }).map((_, idx) => (
-              <div key={idx} className="flex gap-4 items-center p-3 border border-brand-border rounded-lg">
-                <Skeleton variant="rectangle" className="w-20 aspect-video rounded" />
-                <div className="flex-1 flex flex-col gap-2">
-                  <Skeleton variant="text" className="w-1/2 h-3.5" />
-                  <Skeleton variant="text" className="w-1/4 h-3" />
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="grid lg:grid-cols-3 gap-6 text-white">
+
+      {/* Left */}
+
+      <div className="bg-brand-surface border border-brand-border rounded-xl p-5 h-fit sticky top-20">
+
+        <div className="aspect-video rounded-lg overflow-hidden bg-zinc-900">
+          {playlist.videos?.length ? (
+            <img
+              src={playlist.videos[0].thumbnail}
+              alt={playlist.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ListVideo size={42} className="text-zinc-500" />
+            </div>
+          )}
         </div>
-      ) : (
-        /* Populated Playlist Details Workspace */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Playlist Cover / Metadata Left Column */}
-          {/* TODO: Backend Integration */}
-          <div className="lg:col-span-1 bg-brand-surface border border-brand-border rounded-xl p-5 flex flex-col gap-4 sticky top-20 h-fit">
-            <div className="aspect-video w-full rounded-lg bg-zinc-800 border border-brand-border overflow-hidden relative flex items-center justify-center text-zinc-500">
-              {playlist.thumbnail ? (
-                <img src={playlist.thumbnail} alt={playlist.name} className="w-full h-full object-cover" />
-              ) : (
-                <ListVideo size={36} />
-              )}
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                <div className="bg-brand-accent p-3 rounded-full text-white shadow-lg">
-                  <Play size={18} fill="currentColor" className="ml-0.5" />
-                </div>
-              </div>
-            </div>
 
-            <div>
-              <h2 className="text-xl font-bold text-white leading-tight">
-                {playlist.name}
-              </h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                {playlist.videosCount || 0} videos &bull; Created recently
-              </p>
-              {playlist.description && (
-                <p className="text-xs text-zinc-500 leading-relaxed mt-3 whitespace-pre-wrap">
-                  {playlist.description}
-                </p>
-              )}
-            </div>
+        <h2 className="text-xl font-bold mt-4">
+          {playlist.name}
+        </h2>
 
-            <div className="flex items-center gap-2 border-t border-brand-border pt-4 mt-2">
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                icon={Edit2}
-                onClick={() => toast('Edit title placeholder / TODO')}
-                className="flex-1"
-              >
-                Edit
-              </Button>
-              <Button 
-                variant="danger" 
-                size="sm" 
-                icon={Trash2}
-                onClick={() => setIsDeleteOpen(true)}
-                className="flex-1"
-              >
-                Delete
-              </Button>
-            </div>
+        <p className="text-xs text-zinc-500 mt-1">
+          {playlist.videos?.length || 0} videos •{" "}
+          {new Date(playlist.createdAt).toLocaleDateString()}
+        </p>
+
+        {playlist.description && (
+          <p className="text-sm text-zinc-400 mt-4">
+            {playlist.description}
+          </p>
+        )}
+
+        <div className="flex gap-3 mt-6">
+
+          <Button
+            variant="secondary"
+            className="flex-1"
+            icon={Edit2}
+            onClick={() => setIsEditOpen(true)}
+          >
+            Edit
+          </Button>
+
+          <Button
+            variant="danger"
+            className="flex-1"
+            icon={Trash2}
+            onClick={() => setIsDeleteOpen(true)}
+          >
+            Delete
+          </Button>
+
+        </div>
+      </div>
+
+      {/* Right */}
+
+      <div className="lg:col-span-2 flex flex-col gap-3">
+
+        {!playlist.videos?.length ? (
+          <div className="border border-brand-border rounded-xl p-12 text-center">
+            <ListVideo size={32} className="mx-auto text-zinc-500 mb-3" />
+            <h3>No videos in playlist</h3>
           </div>
+        ) : (
+          playlist.videos.map((video, index) => (
+            <div
+              key={video._id}
+              className="flex items-center gap-4 border border-brand-border rounded-xl p-3"
+            >
+              <span className="w-6 text-zinc-500">
+                {index + 1}
+              </span>
 
-          {/* Videos List Right Column */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            {!playlist.videos || playlist.videos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 bg-brand-surface/30 border border-brand-border rounded-xl text-center">
-                <ListVideo size={24} className="text-zinc-500 mb-3" />
-                <h4 className="text-sm font-semibold text-white">No videos in playlist</h4>
+              <Link to={`/watch/${video._id}`}>
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="w-44 aspect-video rounded-lg object-cover"
+                />
+              </Link>
+
+              <div className="flex-1 min-w-0">
+                <Link
+                  to={`/watch/${video._id}`}
+                  className="font-semibold hover:text-brand-accent line-clamp-2"
+                >
+                  {video.title}
+                </Link>
+
+                <p className="text-sm text-zinc-400 mt-1">
+                  {video.owner?.fullname}
+                </p>
+
                 <p className="text-xs text-zinc-500 mt-1">
-                  Add videos to this playlist while watching them.
+                  {video.views} views •{" "}
+                  {new Date(video.createdAt).toLocaleDateString()}
                 </p>
               </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {playlist.videos.map((video, idx) => (
-                  <div 
-                    key={video.id} 
-                    className="flex gap-4 items-center p-3 bg-brand-surface/20 border border-brand-border rounded-xl hover:border-zinc-800 transition-colors group/row"
-                  >
-                    <span className="text-xs font-semibold text-zinc-500 w-4 text-center tabular-nums">
-                      {idx + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <VideoCard video={video} />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={Trash2}
-                      onClick={() => handleRemoveVideo(video.id)}
-                      className="text-zinc-500 hover:text-red-500 opacity-0 group-hover/row:opacity-100 transition-opacity"
-                      title="Remove from playlist"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Delete playlist confirmation */}
+              <Button
+                variant="ghost"
+                icon={Trash2}
+                onClick={() => handleRemoveVideo(video._id)}
+              />
+            </div>
+          ))
+        )}
+
+      </div>
+
       <ConfirmationDialog
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
-        onConfirm={handleDeletePlaylist}
+        onConfirm={handleDelete}
         isConfirming={isDeleting}
         title="Delete Playlist?"
-        message="This action will permanently delete the playlist folder. The videos inside the playlist will NOT be deleted."
-        confirmText="Delete"
-        cancelText="Cancel"
+        message="This action cannot be undone."
+      />
+
+      <EditPlaylistDialog
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        playlist={playlist}
+        onUpdated={setPlaylist}
       />
     </div>
   );

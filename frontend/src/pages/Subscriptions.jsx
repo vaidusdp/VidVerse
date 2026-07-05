@@ -1,17 +1,47 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import Skeleton from '../components/ui/Skeleton';
 import ChannelCard from '../components/channel/ChannelCard';
 import toast from 'react-hot-toast';
+import useAuthStore from '../store/auth.store';
+import subscribeService from '../services/subscribe.services';
 
 export default function Subscriptions() {
-  // Data states: channels = [] defaults to the natural empty state
-  // TODO: Backend Integration - replace with subscriptions fetch call
+  const user = useAuthStore(state => state.user);
   const [channels, setChannels] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleToggleSubscribe = (username) => {
-    // TODO: Backend Integration
-    toast.success(`Unsubscribed from @${username}`);
+  useEffect(() => {
+    if(!user) return;
+    const fetchSubscribedChannel = async () => {
+      try {
+        setLoading(true);
+        const response = await subscribeService.getSubscribedChannel(user._id);
+        setChannels(response.data);
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to fetch subscribed channels")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSubscribedChannel();
+  }, [user])
+
+  const handleToggleSubscribe = async (channelId) => {
+    try {
+      await subscribeService.toggleSubscribe(channelId);
+
+      setChannels((prev) =>
+        prev.filter((channel) => channel._id !== channelId)
+      );
+
+      toast.success("Subscription updated");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to update subscription"
+      );
+    }
   };
 
   return (
@@ -22,7 +52,7 @@ export default function Subscriptions() {
         <p className="text-xs text-zinc-500 mt-0.5">Channels you subscribe to.</p>
       </div>
 
-      {channels === null ? (
+      {loading ? (
         /* Loading Skeletons */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, idx) => (
@@ -53,9 +83,7 @@ export default function Subscriptions() {
           </p>
         </div>
       ) : (
-        /* Populated Channel Cards Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* TODO: Backend Integration */}
           {channels.map((channel) => (
             <ChannelCard 
               key={channel.username} 

@@ -3,7 +3,6 @@ import {
   registerUser,
   loginUser,
   logoutUser,
-  refreshAccessToken,
   getCurrentUser,
   changeUserPassword,
   updateAccountDetails,

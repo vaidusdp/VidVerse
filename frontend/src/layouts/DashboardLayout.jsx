@@ -1,34 +1,34 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  BarChart3, 
-  Video, 
-  ArrowLeft, 
-  LogOut, 
-  Play, 
+import React, { useState } from "react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  BarChart3,
+  Video,
+  ArrowLeft,
+  LogOut,
+  Play,
   Menu,
   X,
   User,
-  Settings
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+  Settings,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleLogout = () => {
     // TODO: Backend Integration
-    toast.success('Logged out successfully');
-    navigate('/login');
+    toast.success("Logged out successfully");
+    navigate("/login");
   };
 
   const studioLinks = [
-    { name: 'Dashboard', path: '/studio', icon: BarChart3, exact: true },
-    { name: 'My Videos', path: '/studio/videos', icon: Video, exact: false },
+    { name: "Dashboard", path: "/studio", icon: BarChart3, exact: true },
+    { name: "My Videos", path: "/studio/videos", icon: Video, exact: false },
   ];
 
   const isActiveLink = (link) => {
@@ -49,7 +49,7 @@ export default function DashboardLayout() {
           >
             {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
-          
+
           <Link to="/studio" className="flex items-center gap-2 select-none">
             <div className="bg-brand-accent p-1.5 rounded-md flex items-center justify-center">
               <Play size={14} fill="currentColor" className="text-white" />
@@ -58,13 +58,15 @@ export default function DashboardLayout() {
               Studio
             </span>
           </Link>
-          <span className="text-zinc-500 text-sm hidden sm:inline-block">/ Creator Workspace</span>
+          <span className="text-zinc-500 text-sm hidden sm:inline-block">
+            / Creator Workspace
+          </span>
         </div>
 
         {/* Profile Dropdown */}
         <div className="flex items-center gap-3">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/5 transition-colors text-zinc-300 hover:text-white text-xs sm:text-sm font-medium rounded-lg border border-brand-border"
           >
             <ArrowLeft size={14} />
@@ -72,7 +74,7 @@ export default function DashboardLayout() {
           </Link>
 
           <div className="relative">
-            <button 
+            <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-bg border border-brand-border hover:border-brand-accent transition-colors focus:outline-none overflow-hidden text-sm font-bold text-white"
             >
@@ -81,18 +83,21 @@ export default function DashboardLayout() {
 
             {isProfileOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsProfileOpen(false)}
+                />
                 <div className="absolute right-0 mt-2.5 w-48 bg-brand-surface border border-brand-border rounded-lg shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <Link 
-                    to="/profile" 
+                  <Link
+                    to="/profile"
                     onClick={() => setIsProfileOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
                   >
                     <User size={15} />
                     My Profile
                   </Link>
-                  <Link 
-                    to="/settings" 
+                  <Link
+                    to="/settings"
                     onClick={() => setIsProfileOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
                   >
@@ -100,7 +105,7 @@ export default function DashboardLayout() {
                     Settings
                   </Link>
                   <div className="border-t border-brand-border my-1.5" />
-                  <button 
+                  <button
                     onClick={() => {
                       setIsProfileOpen(false);
                       handleLogout();
@@ -124,7 +129,7 @@ export default function DashboardLayout() {
             <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-3.5 mb-2 select-none">
               Creator Studio
             </div>
-            
+
             {studioLinks.map((link) => {
               const Icon = link.icon;
               const active = isActiveLink(link);
@@ -133,12 +138,15 @@ export default function DashboardLayout() {
                   key={link.path}
                   to={link.path}
                   className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 font-medium ${
-                    active 
-                      ? 'bg-brand-accent text-white font-semibold shadow-md shadow-brand-accent/10' 
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                    active
+                      ? "bg-brand-accent text-white font-semibold shadow-md shadow-brand-accent/10"
+                      : "text-zinc-400 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <Icon size={18} className={active ? 'text-white' : 'text-zinc-400'} />
+                  <Icon
+                    size={18}
+                    className={active ? "text-white" : "text-zinc-400"}
+                  />
                   <span>{link.name}</span>
                 </Link>
               );
@@ -149,7 +157,7 @@ export default function DashboardLayout() {
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <>
-            <div 
+            <div
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             />
@@ -158,7 +166,7 @@ export default function DashboardLayout() {
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-3.5 mb-2 select-none">
                   Creator Studio
                 </div>
-                
+
                 {studioLinks.map((link) => {
                   const Icon = link.icon;
                   const active = isActiveLink(link);
@@ -168,9 +176,9 @@ export default function DashboardLayout() {
                       to={link.path}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-all duration-150 font-medium ${
-                        active 
-                          ? 'bg-brand-accent text-white font-semibold' 
-                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                        active
+                          ? "bg-brand-accent text-white font-semibold"
+                          : "text-zinc-400 hover:text-white hover:bg-white/5"
                       }`}
                     >
                       <Icon size={18} />

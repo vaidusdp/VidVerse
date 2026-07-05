@@ -8,6 +8,7 @@ import {
   deleteVideo,
   getMyVideos,
   getChannelVideos,
+  getRecommendedVideos,
 } from "../controllers/video.controller.js";
 import {upload} from "../middlewares/multer.middleware.js";
 import {verifyJWT} from "../middlewares/auth.middleware.js";
@@ -37,7 +38,7 @@ router.route("/channels/:channelId").get(verifyJWT, getChannelVideos);
 
 router.route("/").get(verifyJWT, getAllVideos);
 
-router.route("/:videoId/publish").patch(verifyJWT, togglePublishStatus);
+router.route("/:videoId/toggle-publish").patch(verifyJWT, togglePublishStatus);
 
 router.route("/update-video/:videoId").patch(
   verifyJWT,
@@ -51,5 +52,6 @@ router.route("/update-video/:videoId").patch(
 );
 
 router.route("/delete/:videoId").delete(verifyJWT, deleteVideo);
+router.route("/recommended/:videoId").get(verifyJWT, getRecommendedVideos);
 
 export default router;

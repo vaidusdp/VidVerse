@@ -2,6 +2,14 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+import userRoutes from "./routes/auth.route.js";
+import videoRoutes from "./routes/video.route.js";
+import commentRoutes from "./routes/comment.route.js";
+import likeRoutes from "./routes/like.route.js";
+import subscriberRoutes from "./routes/subscription.route.js";
+import playlistRoutes from "./routes/playlist.route.js";
+import dashboardRoutes from "./routes/dashboard.route.js";
+
 const app = express();
 
 app.use(
@@ -19,31 +27,13 @@ app.use(express.json({limit: "16kb"}));
 app.use(express.urlencoded({extended: true, limit: "16kb"}));
 app.use(express.static("public"));
 
-app.get("/api/v1/home", (req, res) => {
-  console.log("Testing Home");
-});
 
-// User
-import userRoutes from "./routes/auth.route.js";
 app.use("/api/v1/users", userRoutes);
-
-// Video
-import videoRoutes from "./routes/video.route.js";
 app.use("/api/v1/videos", videoRoutes);
-
-import commentRoutes from "./routes/comment.route.js";
 app.use("/api/v1/comments", commentRoutes);
-
-import likeRoutes from "./routes/like.route.js";
 app.use("/api/v1/likes", likeRoutes);
-
-import subscriberRoutes from "./routes/subscription.route.js";
 app.use("/api/v1/subscription", subscriberRoutes);
-
-import playlistRoutes from "./routes/playlist.route.js";
 app.use("/api/v1/playlists", playlistRoutes);
-
-import dashboardRoutes from "./routes/dashboard.route.js";
 app.use("/api/v1/dashboard", dashboardRoutes);
 
 export default app;

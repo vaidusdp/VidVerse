@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FolderPlus, ListVideo } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,20 +9,55 @@ import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import Button from '../components/ui/Button';
+import playlistService from '../services/playlist.services';
+import useAuthStore from '../store/auth.store';
 
 export default function Playlists() {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
-  
-  // Data states: playlists = [] defaults to empty state
-  // TODO: Backend Integration - replace with playlists fetch call
+
   const [playlists, setPlaylists] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const handleCreatePlaylist = (data) => {
-    // TODO: Backend Integration
-    toast.success('Playlist created successfully! (TODO: Backend Integration)');
-    reset();
-    setIsCreateOpen(false);
+  const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+  const fetchPlaylists = async () => {
+    try {
+      setLoading(true);
+
+      const response = await playlistService.getUserPlaylists(user._id);
+      setPlaylists(response.data);
+
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to fetch playlists."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (user?._id) {
+    fetchPlaylists();
+  }
+}, [user]);
+
+  const handleCreatePlaylist = async (data) => {
+    try {
+      const response = await playlistService.createPlaylist(data);
+      setPlaylists(prev => [response.data, ...prev]);
+      toast.success('Playlist created successfully! (TODO: Backend Integration)');
+      reset();
+      setIsCreateOpen(false); 
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to create playlist."
+      );
+    } 
+    
   };
 
   return (
@@ -44,7 +79,7 @@ export default function Playlists() {
         </Button>
       </div>
 
-      {playlists === null ? (
+      {loading ? (
         /* Loading Skeletons Grid */
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, idx) => (
@@ -72,7 +107,7 @@ export default function Playlists() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {/* TODO: Backend Integration */}
           {playlists.map((playlist) => (
-            <PlaylistCard key={playlist.id} playlist={playlist} />
+            <PlaylistCard key={playlist._id} playlist={playlist} />
           ))}
         </div>
       )}

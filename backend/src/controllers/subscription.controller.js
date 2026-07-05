@@ -27,17 +27,18 @@ const subscriptionToggle = asyncHandler(async (req, res) => {
   });
 
   let subscription = false;
+  let isSubscribed;
   if (existingSubscription) {
     subscription = await Subscription.findByIdAndDelete(
       existingSubscription._id,
     );
+    isSubscribed = false;
   } else {
     subscription = await Subscription.create({
       subscriber: req.user._id,
       channel: channelId,
     });
-
-    subscription = true;
+    isSubscribed=true;
   }
 
   return res
@@ -46,27 +47,78 @@ const subscriptionToggle = asyncHandler(async (req, res) => {
       new APIResponse(
         200,
         subscription,
-        `User ${subscription ? "subscribed" : "un-subscribed"} this channel suffessfully`,
+        `User ${isSubscribed ? "subscribed" : "un-subscribed"} this channel suffessfully`,
       ),
     );
 });
 
 const getSubscribedChannel = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const { userId } = req.params;
 
-  const subscriptions = await Subscription.find({
-    subscriber: userId,
-  }).populate("channel", "fullname username avatar");
+  const channels = await Subscription.aggregate([
+    {
+      $match: {
+        subscriber: new mongoose.Types.ObjectId(userId),
+      },
+    },
 
-  return res
-    .status(200)
-    .json(
-      new APIResponse(
-        200,
-        subscriptions,
-        "User Subscribtions Fetched Successfully",
-      ),
-    );
+    {
+      $lookup: {
+        from: "users",
+        localField: "channel",
+        foreignField: "_id",
+        as: "channel",
+      },
+    },
+
+    {
+      $unwind: "$channel",
+    },
+
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "channel._id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+
+    {
+      $lookup: {
+        from: "videos",
+        localField: "channel._id",
+        foreignField: "owner",
+        as: "videos",
+      },
+    },
+
+    {
+      $addFields: {
+        "channel.subscribersCount": {
+          $size: "$subscribers",
+        },
+        "channel.videosCount": {
+          $size: "$videos",
+        },
+        "channel.isSubscribed": true,
+      },
+    },
+
+    {
+      $replaceRoot: {
+        newRoot: "$channel",
+      },
+    },
+  ]);
+
+  return res.status(200).json(
+    new APIResponse(
+      200,
+      channels,
+      "Subscribed channels fetched successfully"
+    )
+  );
 });
 
 const getChannelSubscriptions = asyncHandler(async (req, res) => {

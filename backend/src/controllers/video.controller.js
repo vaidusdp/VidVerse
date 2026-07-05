@@ -4,6 +4,7 @@ import {APIResponse} from "../utils/APIResponse.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {uploadOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js";
 import mongoose from "mongoose";
+import { User } from "../models/user.model.js";
 
 const publishVideo = asyncHandler(async (req, res) => {
   const {title, description} = req.body;
@@ -66,7 +67,7 @@ const publishVideo = asyncHandler(async (req, res) => {
 
     return res
       .status(201)
-      .json(new APIResponse(200, videoCreated, "Video Published Successfully"));
+      .json(new APIResponse(201, videoCreated, "Video Published Successfully"));
   } catch (error) {
     console.log("Video Publishing Failed");
     if (video?.public_id) await deleteFromCloudinary(video.public_id, "video");
@@ -81,7 +82,7 @@ const publishVideo = asyncHandler(async (req, res) => {
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
-  const {videoId} = req.params;
+  const { videoId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(videoId)) {
     throw new APIError(400, "Invalid video id");
@@ -94,6 +95,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         isPublished: true,
       },
     },
+
     {
       $lookup: {
         from: "users",
@@ -102,7 +104,54 @@ const getVideoById = asyncHandler(async (req, res) => {
         as: "owner",
       },
     },
-    {$unwind: "$owner"},
+    {
+      $unwind: "$owner",
+    },
+
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "video",
+        as: "likes",
+      },
+    },
+
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "owner._id",
+        foreignField: "channel",
+        as: "subscriptions",
+      },
+    },
+
+    {
+      $addFields: {
+        likesCount: {
+          $size: "$likes",
+        },
+
+        isLiked: {
+          $in: [
+            new mongoose.Types.ObjectId(req.user._id),
+            "$likes.likedBy",
+          ],
+        },
+
+        "owner.subscribersCount": {
+          $size: "$subscriptions",
+        },
+
+        "owner.isSubscribed": {
+          $in: [
+            new mongoose.Types.ObjectId(req.user._id),
+            "$subscriptions.subscriber",
+          ],
+        },
+      },
+    },
+
     {
       $project: {
         videoFile: 1,
@@ -113,16 +162,21 @@ const getVideoById = asyncHandler(async (req, res) => {
         views: 1,
         createdAt: 1,
 
+        likesCount: 1,
+        isLiked: 1,
+
         "owner._id": 1,
         "owner.fullname": 1,
         "owner.username": 1,
         "owner.avatar": 1,
         "owner.coverImage": 1,
+        "owner.subscribersCount": 1,
+        "owner.isSubscribed": 1,
       },
     },
   ]);
 
-  if (!video?.length) {
+  if (!video.length) {
     throw new APIError(404, "Video not found");
   }
 
@@ -132,9 +186,27 @@ const getVideoById = asyncHandler(async (req, res) => {
     },
   });
 
-  return res
-    .status(200)
-    .json(new APIResponse(200, video[0], "Video Uploaded Successfully"));
+  //First pull then pull bcz if we watch a video multipletimes it will appear multiple times.
+  //But if we pull first it will show latest one
+  if (req.user?._id) {
+  // Remove the video if it already exists
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: {
+        watchHistory: videoId,
+      },
+    });
+
+    // Push it to the end (most recent)
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: {
+        watchHistory: videoId,
+      },
+    });
+  }
+
+  return res.status(200).json(
+    new APIResponse(200, video[0], "Video fetched successfully")
+  );
 });
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -406,6 +478,37 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     .json(new APIResponse(200, videos, "Channel Videos Fetched Successfully"));
 });
 
+const getRecommendedVideos = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new APIError(400, "Invalid Video Id");
+  }
+
+  const currentVideo = await Video.findById(videoId);
+
+  if (!currentVideo) {
+    throw new APIError(404, "Video not found");
+  }
+
+  const recommendedVideos = await Video.find({
+    _id: { $ne: videoId },
+    isPublished: true,
+  })
+    .populate("owner", "fullname username avatar")
+    .sort({ createdAt: -1 })
+    .limit(10);
+
+  return res.status(200).json(
+    new APIResponse(
+      200,
+      recommendedVideos,
+      "Recommended videos fetched successfully"
+    )
+  );
+});
+
+
 export {
   publishVideo,
   getVideoById,
@@ -415,4 +518,5 @@ export {
   deleteVideo,
   getMyVideos,
   getChannelVideos,
+  getRecommendedVideos,
 };

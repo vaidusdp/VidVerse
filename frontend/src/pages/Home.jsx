@@ -30,30 +30,9 @@ export default function Home() {
   
   const [activeCategory, setActiveCategory] = useState('All');
 
-  const categories = ['All', 'Technology', 'Programming', 'Gaming', 'Music', 'Design', 'Science', 'Sports'];
 
   return (
     <div className="font-sans flex flex-col gap-6">
-      {/* Categories Header */}
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 select-none">
-        {categories.map((category) => {
-          const isActive = activeCategory === category;
-          return (
-            <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 focus:outline-none ${
-                isActive 
-                  ? 'bg-white text-black font-bold' 
-                  : 'bg-brand-surface text-zinc-400 hover:text-white border border-brand-border'
-              }`}
-            >
-              {category}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Main Grid View */}
       {loading ? (
         /* Loading Skeletons State */

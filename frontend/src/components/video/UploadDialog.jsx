@@ -7,8 +7,10 @@ import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import Button from '../ui/Button';
 
+import videoServices from '../../services/video.services';
+
 export default function UploadDialog({ isOpen, onClose }) {
-  const { 
+  const {
     register, 
     handleSubmit, 
     reset,
@@ -17,6 +19,7 @@ export default function UploadDialog({ isOpen, onClose }) {
   
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleVideoChange = (e) => {
     if (e.target.files?.[0]) {
@@ -30,20 +33,42 @@ export default function UploadDialog({ isOpen, onClose }) {
     }
   };
 
-  const handleFormSubmit = (data) => {
+  const handleFormSubmit = async (data) => {
     if (!videoFile) {
       toast.error('Please select a video file to upload');
       return;
     }
+
+    if(!thumbnailFile){
+      toast.error('Please select a thumbnail file to upload');
+      return;
+    }
     
-    // TODO: Backend Integration
-    toast.success('Upload workspace submitted! (TODO: Backend Integration)');
-    
-    // Reset Form
-    reset();
-    setVideoFile(null);
-    setThumbnailFile(null);
-    onClose();
+    try {
+      setLoading(true);
+      const formData = new FormData();
+
+      formData.append("title", data.title);
+      formData.append("description", data.description);
+      formData.append("thumbnail", thumbnailFile);
+      formData.append("video", videoFile);
+
+      const response = await videoServices.publishVideo(formData);
+
+      toast.success(response.message);
+
+      reset();
+      setVideoFile(null);
+      setThumbnailFile(null);
+      onClose();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to upload video."
+      );
+    } finally {
+      setLoading(false)
+    }
   };
 
   return (
@@ -118,7 +143,9 @@ export default function UploadDialog({ isOpen, onClose }) {
               placeholder="Tell viewers about your video..."
               rows={3}
               error={errors.description?.message}
-              {...register('description')}
+              {...register('description', {
+                required: "Description is required"
+              })}
             />
           </div>
 
@@ -153,6 +180,7 @@ export default function UploadDialog({ isOpen, onClose }) {
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
                   <Button 
+                    type='button'
                     variant="danger" 
                     size="sm" 
                     onClick={() => setThumbnailFile(null)}
@@ -168,11 +196,11 @@ export default function UploadDialog({ isOpen, onClose }) {
 
         {/* Footer actions */}
         <div className="flex items-center justify-end gap-3 border-t border-brand-border pt-4 mt-2">
-          <Button variant="secondary" onClick={onClose}>
+          <Button type='button' variant="secondary" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary">
-            Upload Video
+          <Button type="submit" variant="primary" disabled={loading}>
+            {loading ? "Uploading..." : "Upload Video"}
           </Button>
         </div>
       </form>

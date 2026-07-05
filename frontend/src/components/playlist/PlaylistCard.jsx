@@ -2,15 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Play, ListVideo } from 'lucide-react';
 
-// TODO: Backend Integration
 export default function PlaylistCard({ playlist }) {
   if (!playlist) return null;
 
-  const { id, name, description, videosCount, thumbnail } = playlist;
+  const { _id, name, description, videosCount, thumbnail } = playlist;
 
   return (
     <Link 
-      to={`/playlists/${id}`} 
+      to={`/playlists/${_id}`} 
       className="group flex flex-col gap-2 font-sans relative"
     >
       {/* Visual Folder Stack effect */}
@@ -19,9 +18,9 @@ export default function PlaylistCard({ playlist }) {
         <div className="absolute top-0 left-2 right-2 -translate-y-[4px] h-full bg-zinc-700/50 rounded-lg -z-10 border-t border-white/5 transition-transform group-hover:-translate-y-[6px]" />
         <div className="absolute top-0 left-4 right-4 -translate-y-[8px] h-full bg-zinc-600/30 rounded-lg -z-20 border-t border-white/5 transition-transform group-hover:-translate-y-[11px]" />
         
-        {thumbnail ? (
+        {playlist.videos?.[0]?.thumbnail ? (
           <img 
-            src={thumbnail} 
+            src={playlist.videos[0].thumbnail} 
             alt={name} 
             className="w-full h-full object-cover"
           />
@@ -40,7 +39,7 @@ export default function PlaylistCard({ playlist }) {
 
         <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold tracking-wider text-white flex items-center gap-1.5">
           <ListVideo size={12} />
-          <span>{videosCount || 0} videos</span>
+          <span>{playlist.videos?.length || 0} videos</span>
         </div>
       </div>
 

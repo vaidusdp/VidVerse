@@ -1,21 +1,21 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  Maximize, 
-  Minimize, 
-  MonitorPlay, 
-  Layout, 
-  RotateCcw
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useRef, useState, useEffect } from "react";
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  MonitorPlay,
+  Layout,
+  RotateCcw,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
-  
+
   // Player Controls State
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -91,13 +91,19 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(() => {});
+      containerRef.current
+        .requestFullscreen()
+        .then(() => {
+          setIsFullscreen(true);
+        })
+        .catch(() => {});
     } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch(() => {});
+      document
+        .exitFullscreen()
+        .then(() => {
+          setIsFullscreen(false);
+        })
+        .catch(() => {});
     }
   };
 
@@ -115,7 +121,7 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
       document.exitPictureInPicture().catch(() => {});
     } else {
       videoRef.current.requestPictureInPicture().catch(() => {
-        toast.error('Picture-in-Picture not supported by your browser');
+        toast.error("Picture-in-Picture not supported by your browser");
       });
     }
   };
@@ -124,7 +130,7 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
   const formatTime = (secs) => {
     const minutes = Math.floor(secs / 60);
     const seconds = Math.floor(secs % 60);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
   // Keyboard navigation helpers
@@ -133,21 +139,21 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
       // Only execute keyboard hotkeys if page cursor is focused on the document body
       if (document.activeElement !== document.body) return;
 
-      switch(e.key.toLowerCase()) {
-        case ' ':
-        case 'k':
+      switch (e.key.toLowerCase()) {
+        case " ":
+        case "k":
           e.preventDefault();
           togglePlay();
           break;
-        case 'm':
+        case "m":
           e.preventDefault();
           toggleMute();
           break;
-        case 'f':
+        case "f":
           e.preventDefault();
           toggleFullscreen();
           break;
-        case 't':
+        case "t":
           e.preventDefault();
           toggleTheater();
           break;
@@ -156,12 +162,12 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPlaying, isMuted, isTheater]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
       onMouseMove={() => setShowControls(true)}
       onMouseLeave={() => isPlaying && setShowControls(false)}
@@ -181,7 +187,7 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
 
       {/* Centered Large Play/Pause Toggle Indicator */}
       {!isPlaying && (
-        <div 
+        <div
           onClick={togglePlay}
           className="absolute inset-0 flex items-center justify-center bg-black/35 cursor-pointer transition-opacity"
         >
@@ -192,9 +198,9 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
       )}
 
       {/* Control Tray Overlay - Visible when hovered or paused */}
-      <div 
+      <div
         className={`absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-3 transition-opacity duration-300 ${
-          showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         {/* Progress Slider Bar */}
@@ -214,13 +220,23 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
         <div className="flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
             {/* Play/Pause Button */}
-            <button onClick={togglePlay} className="hover:text-brand-accent transition-colors">
-              {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+            <button
+              onClick={togglePlay}
+              className="hover:text-brand-accent transition-colors"
+            >
+              {isPlaying ? (
+                <Pause size={18} fill="currentColor" />
+              ) : (
+                <Play size={18} fill="currentColor" />
+              )}
             </button>
 
             {/* Volume Control Box */}
             <div className="flex items-center gap-2 group/volume">
-              <button onClick={toggleMute} className="hover:text-brand-accent transition-colors">
+              <button
+                onClick={toggleMute}
+                className="hover:text-brand-accent transition-colors"
+              >
                 {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
               <input
@@ -244,8 +260,8 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
 
           <div className="flex items-center gap-4">
             {/* Picture in Picture */}
-            <button 
-              onClick={handlePictureInPicture} 
+            <button
+              onClick={handlePictureInPicture}
               className="hover:text-brand-accent transition-colors"
               title="Picture in Picture"
             >
@@ -253,17 +269,17 @@ export default function VideoPlayer({ src, poster, onTheaterModeToggle }) {
             </button>
 
             {/* Theater Mode Toggle */}
-            <button 
-              onClick={toggleTheater} 
-              className={`hover:text-brand-accent transition-colors ${isTheater ? 'text-brand-accent' : ''}`}
+            <button
+              onClick={toggleTheater}
+              className={`hover:text-brand-accent transition-colors ${isTheater ? "text-brand-accent" : ""}`}
               title="Theater Mode (T)"
             >
               <Layout size={18} />
             </button>
 
             {/* Fullscreen Toggle */}
-            <button 
-              onClick={toggleFullscreen} 
+            <button
+              onClick={toggleFullscreen}
               className="hover:text-brand-accent transition-colors"
               title="Fullscreen (F)"
             >

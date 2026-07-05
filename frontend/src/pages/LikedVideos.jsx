@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ThumbsUp } from 'lucide-react';
 import Skeleton from '../components/ui/Skeleton';
 import VideoCard from '../components/video/VideoCard';
+import videoServices from '../services/video.services';
+import likeServices from '../services/like.services';
+import toast from 'react-hot-toast';
 
 export default function LikedVideos() {
   // Data states: likedVideos = [] defaults to the natural Empty state
   // TODO: Backend Integration - replace with liked video endpoint fetch
   const [likedVideos, setLikedVideos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const fetchLikedVideos = async () => {
+      try {
+        setLoading(true);
+        const response = await likeServices.getLikedVideos();
+        setLikedVideos(response.data);  
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Can't fetch user's liked videos.")
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLikedVideos();
+  }, [])
 
   return (
     <div className="font-sans text-white flex flex-col gap-6">
@@ -16,7 +34,7 @@ export default function LikedVideos() {
         <p className="text-xs text-zinc-500 mt-0.5">A history of videos you have liked.</p>
       </div>
 
-      {likedVideos === null ? (
+      {loading ? (
         /* Loading Skeletons */
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, idx) => (
@@ -50,7 +68,7 @@ export default function LikedVideos() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {/* TODO: Backend Integration */}
           {likedVideos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard key={video._id} video={video} />
           ))}
         </div>
       )}

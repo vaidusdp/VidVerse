@@ -19,9 +19,9 @@ import WatchVideo from "./pages/WatchVideo";
 import Channel from "./pages/Channel";
 import Subscriptions from "./pages/Subscriptions";
 import LikedVideos from "./pages/LikedVideos";
+import WatchHistory from "./pages/WatchHistory";
 import Playlists from "./pages/Playlists";
 import PlaylistDetails from "./pages/PlaylistDetails";
-import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
 import Login from "./pages/Login";
@@ -37,7 +37,7 @@ export default function App() {
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth])
+  }, [checkAuth]);
 
   return (
     <Router>
@@ -66,13 +66,13 @@ export default function App() {
             <Route path="/watch/:videoId" element={<WatchVideo />} />
             <Route path="/c/:username" element={<Channel />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/history" element={<WatchHistory />} />
             <Route path="/liked-videos" element={<LikedVideos />} />
             <Route path="/playlists" element={<Playlists />} />
             <Route
               path="/playlists/:playlistId"
               element={<PlaylistDetails />}
             />
-            <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="*" element={<NotFound />} />

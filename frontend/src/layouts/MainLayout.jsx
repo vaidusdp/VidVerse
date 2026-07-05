@@ -1,25 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Users, 
   ThumbsUp, 
   ListVideo, 
-  Settings, 
   Tv, 
   Search, 
-  Upload, 
   Sun, 
+  Moon,
   User, 
   LogOut, 
   Play, 
   Menu,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  History
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import useAuthStore from "../store/auth.store";
+
 
 export default function MainLayout() {
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -28,8 +32,26 @@ export default function MainLayout() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Placeholder upload state (hooked to Phase 3 UploadDialog)
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setTheme(localStorage.getItem('theme') || 'dark');
+    };
+    window.addEventListener('theme-change', handleThemeChange);
+    return () => window.removeEventListener('theme-change', handleThemeChange);
+  }, []);
+
+  const handleThemeToggle = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    window.dispatchEvent(new Event('theme-change'));
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -38,19 +60,23 @@ export default function MainLayout() {
     }
   };
 
-  const handleLogout = () => {
-    // TODO: Backend Integration
-    toast.success('Logged out successfully');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logged out successfully');
+      navigate('/login');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Logout failed');
+    }
   };
 
   const navLinks = [
     { name: 'Home', path: '/', icon: Home },
+    { name: 'History', path: '/history', icon: History },
     { name: 'Subscriptions', path: '/subscriptions', icon: Users },
     { name: 'Liked Videos', path: '/liked-videos', icon: ThumbsUp },
     { name: 'Playlists', path: '/playlists', icon: ListVideo },
     { name: 'Creator Studio', path: '/studio', icon: Tv },
-    { name: 'Settings', path: '/settings', icon: Settings },
   ];
 
   return (
@@ -96,26 +122,14 @@ export default function MainLayout() {
             <Search size={18} />
           </Link>
 
-          {/* Upload Button */}
-          <button 
-            onClick={() => {
-              // TODO: Backend Integration
-              toast('Opening Upload Workspace...', { icon: '📤' });
-              setIsUploadOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-accent hover:bg-brand-accent/90 transition-colors text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm"
-          >
-            <Upload size={14} />
-            <span className="hidden sm:inline">Upload</span>
-          </button>
 
-          {/* Theme Toggle Placeholder */}
+          {/* Theme Toggle Button */}
           <button 
-            onClick={() => toast('Theme selection details / TODO: Dark/Light Mode', { icon: '🌓' })}
+            onClick={handleThemeToggle}
             className="p-2 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white transition-colors"
-            title="Theme Selection"
+            title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            <Sun size={18} />
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
           {/* Profile Dropdown Container */}
@@ -124,7 +138,11 @@ export default function MainLayout() {
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-surface border border-brand-border hover:border-brand-accent transition-colors focus:outline-none overflow-hidden text-sm font-bold text-white uppercase"
             >
-              U
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.fullname || user.username} className="w-full h-full object-cover" />
+              ) : (
+                (user?.fullname || user?.username || 'U')[0]
+              )}
             </button>
 
             {isProfileOpen && (
@@ -138,14 +156,6 @@ export default function MainLayout() {
                   >
                     <User size={15} />
                     My Profile
-                  </Link>
-                  <Link 
-                    to="/settings" 
-                    onClick={() => setIsProfileOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
-                  >
-                    <Settings size={15} />
-                    Settings
                   </Link>
                   <div className="border-t border-brand-border my-1.5" />
                   <button 
@@ -195,7 +205,7 @@ export default function MainLayout() {
         {/* Dynamic Route Content Area */}
         <main className="flex-1 min-w-0 pb-20 md:pb-6 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto w-full">
-            <Outlet context={{ isUploadOpen, setIsUploadOpen }} />
+            <Outlet />
           </div>
         </main>
       </div>

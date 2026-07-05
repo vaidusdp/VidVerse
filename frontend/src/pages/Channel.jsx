@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Compass, FolderHeart } from 'lucide-react';
 import Skeleton from '../components/ui/Skeleton';
@@ -7,21 +7,66 @@ import VideoCard from '../components/video/VideoCard';
 import PlaylistCard from '../components/playlist/PlaylistCard';
 import Button from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
+import userServices from '../services/user.services';
+import videoServices from '../services/video.services';
+import subscribeService from '../services/subscribe.services';
+import toast from 'react-hot-toast';
+import playlistService from '../services/playlist.services';
 
 export default function Channel() {
   const { username } = useParams();
   const [activeTab, setActiveTab] = useState('videos');
 
-  // Data states (null represents loading state)
-  // TODO: Backend Integration
   const [channel, setChannel] = useState(null);
   const [videos, setVideos] = useState(null);
   const [playlists, setPlaylists] = useState(null);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  useEffect(() => {
+    const fetchChannel = async () => {
+      try {
+        const responseChannel = await userServices.channelProfile(username);
+        setChannel(responseChannel.data);
+  
+        const responseVideo = await videoServices.getChannelVideos(responseChannel.data._id);
+        setVideos(responseVideo.data);
+
+        const responsePlaylist = await playlistService.getUserPlaylists(responseChannel.data._id);
+        setPlaylists(responsePlaylist.data);
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message || "Failed to fetch channel."
+        );
+      }
+    }
+    fetchChannel();
+  }, [username]);
+
+  const handleSubscribe = async () => {
+    setIsSubscribing(true);
+    try {
+      await subscribeService.toggleSubscribe(channel._id);
+      setChannel(prev => ({
+        ...prev,
+        isSubscribed: !prev.isSubscribed,
+        subscribersCount: prev.isSubscribed
+          ? prev.subscribersCount - 1
+          : prev.subscribersCount + 1
+      }));
+      toast.success(channel.isSubscribed ? "Unsubscribed successfully" : "Subscribed Successfully")
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to update subscription."
+      );
+    } finally {
+      setIsSubscribing(false);
+    }
+  }
 
   const tabs = [
     { id: 'videos', label: 'Videos' },
     { id: 'playlists', label: 'Playlists' },
-    { id: 'about', label: 'About' },
   ];
 
   return (
@@ -72,7 +117,7 @@ export default function Channel() {
               </div>
             </div>
           </div>
-          <Button variant={channel.isSubscribed ? 'secondary' : 'primary'}>
+          <Button disabled={isSubscribing} variant={channel.isSubscribed ? 'secondary' : 'primary'} onClick={handleSubscribe}>
             {channel.isSubscribed ? 'Subscribed' : 'Subscribe'}
           </Button>
         </div>
@@ -112,7 +157,7 @@ export default function Channel() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {/* TODO: Backend Integration */}
                 {videos.map((video) => (
-                  <VideoCard key={video.id} video={video} />
+                  <VideoCard key={video._id} video={video} />
                 ))}
               </div>
             )}
@@ -142,26 +187,9 @@ export default function Channel() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {/* TODO: Backend Integration */}
                 {playlists.map((playlist) => (
-                  <PlaylistCard key={playlist.id} playlist={playlist} />
+                  <PlaylistCard key={playlist._id} playlist={playlist} />
                 ))}
               </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'about' && (
-          <div className="max-w-2xl bg-brand-surface/30 border border-brand-border rounded-xl p-6">
-            <h3 className="text-base font-semibold text-white mb-3">Description</h3>
-            {channel === null ? (
-              <div className="flex flex-col gap-2">
-                <Skeleton variant="text" className="w-full h-3" />
-                <Skeleton variant="text" className="w-5/6 h-3" />
-                <Skeleton variant="text" className="w-3/4 h-3" />
-              </div>
-            ) : (
-              <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
-                {channel.description || 'No description provided by the channel.'}
-              </p>
             )}
           </div>
         )}

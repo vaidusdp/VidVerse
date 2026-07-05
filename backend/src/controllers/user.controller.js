@@ -32,7 +32,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const {fullname, username, email, password} = req.body;
 
   if (
-    [fullname, username, email, password].some((feild) => feild.trim() === "")
+    [fullname, username, email, password].some((feild) => !feild || feild.trim() === "")
   ) {
     throw new APIError(400, "All Feilds Are Required");
   }
@@ -86,7 +86,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     return res
       .status(201)
-      .json(new APIResponse(200, createdUser, "User Registered Successfully"));
+      .json(new APIResponse(201, createdUser, "User Registered Successfully"));
   } catch (error) {
     console.log("User Registration Failed");
     if (avatar) await deleteFromCloudinary(avatar.public_id, "image");
@@ -102,7 +102,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const {email, password} = req.body;
 
-  if ([email, password].some((feild) => feild.trim() === "")) {
+  if ([email, password].some((feild) => !feild || feild.trim() === "")) {
     throw new APIError(400, "All feilds are required");
   }
 
@@ -262,7 +262,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
       },
     },
     {new: true},
-  );
+  ).select("-password -refreshToken");
 
   return res
     .status(200)
@@ -324,7 +324,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-  const {username} = req.params;
+  const { username } = req.params;
 
   if (!username?.trim()) {
     throw new APIError(400, "Username is required");
@@ -333,9 +333,11 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   const channel = await User.aggregate([
     {
       $match: {
-        username: username,
+        username: username.toLowerCase(),
       },
     },
+
+    // Subscribers
     {
       $lookup: {
         from: "subscriptions",
@@ -344,6 +346,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         as: "subscribers",
       },
     },
+
+    // Channels this user has subscribed to
     {
       $lookup: {
         from: "subscriptions",
@@ -352,19 +356,36 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         as: "subscribedTo",
       },
     },
+
+    // Videos uploaded by this channel
+    {
+      $lookup: {
+        from: "videos",
+        localField: "_id",
+        foreignField: "owner",
+        as: "videos",
+      },
+    },
+
     {
       $addFields: {
         subscribersCount: {
           $size: "$subscribers",
         },
+
         channelsSubscribedToCount: {
           $size: "$subscribedTo",
         },
+
+        videosCount: {
+          $size: "$videos",
+        },
+
         isSubscribed: {
           $cond: {
             if: {
               $in: [
-                new mongoose.Types.ObjectId(req.user?._id),
+                new mongoose.Types.ObjectId(req.user._id),
                 "$subscribers.subscriber",
               ],
             },
@@ -374,6 +395,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
       },
     },
+
     {
       $project: {
         fullname: 1,
@@ -381,26 +403,26 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         avatar: 1,
         coverImage: 1,
         email: 1,
+
         subscribersCount: 1,
         channelsSubscribedToCount: 1,
+        videosCount: 1,
         isSubscribed: 1,
       },
     },
   ]);
 
-  if (!channel?.length) {
+  if (!channel.length) {
     throw new APIError(404, "Channel does not exist");
   }
 
-  return res
-    .status(200)
-    .json(
-      new APIResponse(
-        200,
-        channel[0],
-        "User channel profile fetched successfully",
-      ),
-    );
+  return res.status(200).json(
+    new APIResponse(
+      200,
+      channel[0],
+      "User channel profile fetched successfully"
+    )
+  );
 });
 
 const getWatchHistory = asyncHandler(async (req, res) => {

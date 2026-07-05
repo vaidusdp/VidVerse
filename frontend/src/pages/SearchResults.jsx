@@ -4,15 +4,34 @@ import { Search } from 'lucide-react';
 import Skeleton from '../components/ui/Skeleton';
 import VideoCard from '../components/video/VideoCard';
 import ChannelCard from '../components/channel/ChannelCard';
+import videoServices from '../services/video.services';
+import toast from 'react-hot-toast';
 
 export default function SearchResults() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const query = searchParams.get('q') || '';
 
-  // Data states: results = [] defaults to the natural empty state
-  // TODO: Backend Integration - replace with search query endpoint fetch
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(null);
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      try {
+        setResults(null);
+        if (!query.trim()) {
+          setResults([]);
+          return;
+        }
+        const response = await videoServices.getAllVideos({ search: query });
+        setResults(response.data);
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to search.");
+        setResults([]);
+      }
+    };
+
+    fetchSearchResults();
+  }, [query]);
 
   return (
     <div className="font-sans text-white flex flex-col gap-6">
@@ -65,7 +84,7 @@ export default function SearchResults() {
             item.type === 'channel' ? (
               <ChannelCard key={item.username} channel={item} />
             ) : (
-              <VideoCard key={item.id} video={item} />
+              <VideoCard key={item._id} video={item} />
             )
           ))}
         </div>

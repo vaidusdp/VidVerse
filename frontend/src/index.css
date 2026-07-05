@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
+:root {
+  --brand-bg: #09090b;
+  --brand-surface: #18181b;
+  --brand-card: #1f1f23;
+  --brand-accent: #ff3d3d;
+  --brand-border: rgba(255, 255, 255, 0.06);
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --brand-bg: #f4f4f5;
+  --brand-surface: #ffffff;
+  --brand-card: #e4e4e7;
+  --brand-accent: #ff3d3d;
+  --brand-border: rgba(9, 9, 11, 0.1);
+  --text-primary: #09090b;
+  --text-secondary: #71717a;
+  color-scheme: light;
+}
+
 @theme {
-  --color-brand-bg: #09090b;
-  --color-brand-surface: #18181b;
-  --color-brand-card: #1f1f23;
-  --color-brand-accent: #ff3d3d;
-  --color-brand-border: rgba(255, 255, 255, 0.06);
-  --color-zinc-400: #a1a1aa;
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-card: var(--brand-card);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-border: var(--brand-border);
+  --color-zinc-400: var(--text-secondary);
   
   --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-:root {
-  color-scheme: dark;
-}
-
 body {
-  background-color: var(--color-brand-bg);
-  color: #ffffff;
+  background-color: var(--brand-bg);
+  color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: hidden;
+}
+
+/* Theme overrides for standard utility classes in light mode */
+:root[data-theme="light"] body {
+  background-color: var(--brand-bg);
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] .text-white {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme="light"] .bg-brand-bg {
+  background-color: var(--brand-bg) !important;
+}
+
+:root[data-theme="light"] .bg-brand-surface {
+  background-color: var(--brand-surface) !important;
+}
+
+:root[data-theme="light"] .border-brand-border {
+  border-color: var(--brand-border) !important;
+}
+
+:root[data-theme="light"] .text-zinc-400,
+:root[data-theme="light"] .text-zinc-500 {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme="light"] .hover\:bg-white\/5:hover {
+  background-color: rgba(9, 9, 11, 0.05) !important;
+}
+
+:root[data-theme="light"] .bg-white {
+  background-color: #09090b !important;
+}
+
+:root[data-theme="light"] .text-black {
+  color: #ffffff !important;
 }
 
 /* Custom scrollbars */
@@ -38,6 +95,14 @@ body {
   border-radius: 3px;
 }
 
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(9, 9, 11, 0.15);
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(9, 9, 11, 0.25);
 }

@@ -12,13 +12,13 @@ import {verifyJWT} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/playlist").post(verifyJWT, createPlaylist);
-router.route("/:playlistId").get(verifyJWT, getPlaylistById);
-router.route("/:playlistId").patch(verifyJWT, updatePlaylist);
-router.route("/:playlistId").delete(verifyJWT, deletePlaylist);
-router.route("/p/:playlistId/v/:videoId").patch(verifyJWT, addVideoToPlaylist);
+router.route("/create-playlist").post(verifyJWT, createPlaylist);
+router.route("/get-playlist/:playlistId").get(verifyJWT, getPlaylistById);
+router.route("/update-playlist/:playlistId").patch(verifyJWT, updatePlaylist);
+router.route("/delete/:playlistId").delete(verifyJWT, deletePlaylist);
+router.route("/add-video/p/:playlistId/v/:videoId").patch(verifyJWT, addVideoToPlaylist);
 router
-  .route("/p/:playlistId/v/:videoId")
+  .route("/delete-video/p/:playlistId/v/:videoId")
   .delete(verifyJWT, deleteVideoFromPlaylist);
 router.route("/users/:userId").get(verifyJWT, getUserPlaylists);
 

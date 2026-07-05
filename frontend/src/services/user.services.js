@@ -44,6 +44,7 @@ const userServices = {
 
     async getHistory(){
         const response = await api.get("/users/user-watch-history");
+        return response.data;
     }
 }
 

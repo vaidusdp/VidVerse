@@ -50,13 +50,62 @@ const getVideoComments = asyncHandler(async (req, res) => {
     throw new APIError(404, "Video not Found");
   }
 
-  const comments = await Comment.find({
-    video: videoId,
-  })
-    .populate("commentedBy", "fullname username avatar")
-    .sort({
-      createdAt: -1,
-    });
+  const comments = await Comment.aggregate([
+    {
+      $match: {
+        video: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "commentedBy",
+        foreignField: "_id",
+        as: "commentedBy",
+      },
+    },
+    {
+      $unwind: "$commentedBy",
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "comment",
+        as: "likes",
+      },
+    },
+    {
+      $addFields: {
+        likesCount: { $size: "$likes" },
+        isLiked: {
+          $in: [
+            req.user._id,
+            "$likes.likedBy",
+          ],
+        },
+      },
+    },
+    {
+      $project: {
+        content: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        likesCount: 1,
+        isLiked: 1,
+
+        "commentedBy._id": 1,
+        "commentedBy.fullname": 1,
+        "commentedBy.username": 1,
+        "commentedBy.avatar": 1,
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+  ]);
 
   return res
     .status(200)
@@ -85,7 +134,7 @@ const updateComment = asyncHandler(async (req, res) => {
   }
   comment.content = updatedContent;
 
-  comment.save({validateBeforeSave: false});
+  await comment.save({validateBeforeSave: false});
 
   return res
     .status(200)
