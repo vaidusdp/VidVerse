@@ -8,7 +8,11 @@ The application utilizes an express backend server to handle secure data transac
 
 ## Demo Video
 
-<video src="https://raw.githubusercontent.com/vaidusdp/VidVerse/main/frontend/src/assets/VidVerseDemo.mp4" width="100%" controls></video>
+
+
+https://github.com/user-attachments/assets/af653f7e-7c93-48d1-b290-8060a5b102e4
+
+
 
 ---
 
