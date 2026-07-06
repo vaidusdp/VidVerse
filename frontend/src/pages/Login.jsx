@@ -73,15 +73,7 @@ export default function Login() {
               },
             })}
           />
-          <div className="flex justify-end mt-1">
-            <button
-              type="button"
-              onClick={() => toast("Password recovery / TODO: Contact Support")}
-              className="text-[10px] font-semibold text-brand-accent hover:underline focus:outline-none"
-            >
-              Forgot password?
-            </button>
-          </div>
+
         </div>
 
         <Button
