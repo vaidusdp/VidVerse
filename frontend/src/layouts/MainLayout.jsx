@@ -157,6 +157,14 @@ export default function MainLayout() {
                     <User size={15} />
                     My Profile
                   </Link>
+                  <Link 
+                    to="/studio" 
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex md:hidden items-center gap-2 px-4 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    <Tv size={15} />
+                    Creator Studio
+                  </Link>
                   <div className="border-t border-brand-border my-1.5" />
                   <button 
                     onClick={() => {
