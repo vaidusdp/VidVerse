@@ -10,6 +10,8 @@ import subscriberRoutes from "./routes/subscription.route.js";
 import playlistRoutes from "./routes/playlist.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 
+import { errorHandler } from "./middlewares/error.middleware.js";
+
 const app = express();
 
 app.use(
@@ -35,5 +37,7 @@ app.use("/api/v1/likes", likeRoutes);
 app.use("/api/v1/subscription", subscriberRoutes);
 app.use("/api/v1/playlists", playlistRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
+
+app.use(errorHandler);
 
 export default app;

@@ -6,6 +6,12 @@ The application utilizes an express backend server to handle secure data transac
 
 ---
 
+## Demo Video
+
+<video src="frontend/src/assets/VidVerseDemo.mp4" width="100%" controls></video>
+
+---
+
 ## Why I Built This
 
 I built VidVerse to understand the inner workings of media-centric platforms. Building a video sharing site from scratch forced me to deal with real-world problems that simple CRUD apps don't face. I wanted to learn how to handle multi-part form data containing both text files and large video blobs, how to design database schemas that cleanly connect users, videos, likes, and comments, and how to query complex relationships without tanking application performance.
@@ -83,16 +89,15 @@ VidVerse/
 
 ## Screenshots
 
-![Home Feed](screenshots/home.png)
+![Home Feed](frontend/src/assets/HomePage.png)
 *Home Feed displaying recommended videos and categories*
 
-![Video Player](screenshots/watch.png)
+![Video Player](frontend/src/assets/VideoPlayer.png)
 *Custom HTML5 Video Player and related comments section*
 
-![Creator Workspace](screenshots/studio.png)
+![Creator Workspace](frontend/src/assets/CreatorDashboard.png)
 *Creator Workspace showing channel analytics*
 
----
 
 ## Installation
 
